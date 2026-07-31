@@ -63,8 +63,8 @@ export const api = {
   misAlertas: () => request('/alerts'),
   crearAlerta: (keyword: string) =>
     request('/alerts', { method: 'POST', body: JSON.stringify({ keyword }) }),
-  actualizarAlerta: (id: number, hora_envio: number | null, dias_envio: string | null) =>
-    request(`/alerts/${id}`, { method: 'PATCH', body: JSON.stringify({ hora_envio, dias_envio }) }),
+  actualizarAlerta: (id: number, hora_envio: number | null, dias_envio: string | null, frecuencia: string | null) =>
+    request(`/alerts/${id}`, { method: 'PATCH', body: JSON.stringify({ hora_envio, dias_envio, frecuencia }) }),
   eliminarAlerta: (id: number) => request(`/alerts/${id}`, { method: 'DELETE' }),
   pipeline: () => request('/pipeline'),
   addPipeline: (licitacion: { nog: string; titulo: string; entidad: string; monto: number; fecha: string }) =>

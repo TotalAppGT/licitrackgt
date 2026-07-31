@@ -115,12 +115,9 @@ async def procesar_alertas():
                 continue
             if a.dias_envio and dia_actual not in a.dias_envio.split(","):
                 continue
-            if a.hora_envio is not None:
-                if a.ultimo_envio and a.ultimo_envio.date() == ahora.date():
-                    continue
-            else:
-                if a.ultimo_envio and a.ultimo_envio.date() == ahora.date():
-                    continue
+            freq_min = {"15min": 15, "30min": 30, "1hora": 60, "6horas": 360, "diario": 1440}.get(a.frecuencia or "diario", 1440)
+            if a.ultimo_envio and (ahora - a.ultimo_envio).total_seconds() < freq_min * 60:
+                continue
             user_kw_map.setdefault(a.user_id, []).append(a.keyword)
             alerts_to_update.append(a)
         if not user_kw_map:

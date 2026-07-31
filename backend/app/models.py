@@ -65,6 +65,7 @@ class KeywordAlert(Base):
     keyword = Column(String(255), nullable=False)
     hora_envio = Column(Integer)
     dias_envio = Column(String(50), default="1,2,3,4,5")
+    frecuencia = Column(String(20), default="diario")
     ultimo_envio = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

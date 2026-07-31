@@ -502,7 +502,7 @@ class AlertRequest(BaseModel):
 async def mis_alertas(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(KeywordAlert).where(KeywordAlert.user_id == user.id).order_by(KeywordAlert.id))).scalars().all()
     limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("keywords", 5)
-    return {"alerts": [{"id": a.id, "keyword": a.keyword, "hora_envio": a.hora_envio, "dias_envio": a.dias_envio} for a in rows], "limite": limite}
+    return {"alerts": [{"id": a.id, "keyword": a.keyword, "hora_envio": a.hora_envio, "dias_envio": a.dias_envio, "frecuencia": a.frecuencia or "diario"} for a in rows], "limite": limite}
 
 @app.post("/api/alerts")
 async def crear_alerta(req: AlertRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -531,6 +531,7 @@ async def eliminar_alerta(alert_id: int, user: User = Depends(get_current_user),
 class UpdateAlertRequest(BaseModel):
     hora_envio: Optional[int] = None
     dias_envio: Optional[str] = None
+    frecuencia: Optional[str] = None
 
 @app.patch("/api/alerts/{alert_id}")
 async def actualizar_alerta(alert_id: int, req: UpdateAlertRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -543,8 +544,10 @@ async def actualizar_alerta(alert_id: int, req: UpdateAlertRequest, user: User =
         row.hora_envio = req.hora_envio
     if req.dias_envio is not None:
         row.dias_envio = req.dias_envio
+    if req.frecuencia is not None:
+        row.frecuencia = req.frecuencia
     await db.commit()
-    return {"ok": True, "id": row.id, "keyword": row.keyword, "hora_envio": row.hora_envio, "dias_envio": row.dias_envio}
+    return {"ok": True, "id": row.id, "keyword": row.keyword, "hora_envio": row.hora_envio, "dias_envio": row.dias_envio, "frecuencia": row.frecuencia or "diario"}
 
 class PipelineRequest(BaseModel):
     nog: str
@@ -854,6 +857,10 @@ async def startup():
         except Exception: pass
         try:
             await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS ultimo_envio TIMESTAMPTZ"))
+            await db.commit()
+        except Exception: pass
+        try:
+            await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS frecuencia VARCHAR(20) DEFAULT 'diario'"))
             await db.commit()
         except Exception: pass
         result = await db.execute(select(User).where(User.email == "totalappgt@gmail.com"))

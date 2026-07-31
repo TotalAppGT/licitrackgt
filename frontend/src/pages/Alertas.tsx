@@ -12,6 +12,7 @@ export default function Alertas() {
   const [editing, setEditing] = useState<number | null>(null)
   const [editHora, setEditHora] = useState<number | null>(null)
   const [editDias, setEditDias] = useState<string>('1,2,3,4,5')
+  const [editFrec, setEditFrec] = useState<string>('diario')
 
   const cargar = () => {
     api.misAlertas().then(d => { setAlerts(d.alerts || []); setLimite(d.limite || 5) }).catch(() => {})
@@ -35,7 +36,7 @@ export default function Alertas() {
   }
 
   const guardarSchedule = async (id: number) => {
-    try { await api.actualizarAlerta(id, editHora, editDias); setEditing(null); cargar() }
+    try { await api.actualizarAlerta(id, editHora, editDias, editFrec); setEditing(null); cargar() }
     catch (e: any) { alert(e.message) }
   }
 
@@ -83,7 +84,7 @@ export default function Alertas() {
                         {String(a.hora_envio).padStart(2, '0')}:00
                       </span>
                     ) : (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Inmediato</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{a.frecuencia || 'diario'}</span>
                     )}
                     {a.dias_envio && a.dias_envio !== '1,2,3,4,5' && (
                       <span className="text-xs text-gray-400">
@@ -128,6 +129,17 @@ export default function Alertas() {
                             </button>
                           ))}
                         </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Frecuencia</label>
+                        <select value={editFrec} onChange={e => setEditFrec(e.target.value)}
+                          className="w-full text-xs border rounded-lg p-2 mt-1">
+                          <option value="15min">Cada 15 minutos</option>
+                          <option value="30min">Cada 30 minutos</option>
+                          <option value="1hora">Cada hora</option>
+                          <option value="6horas">Cada 6 horas</option>
+                          <option value="diario">Una vez al dia</option>
+                        </select>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3 justify-end">
