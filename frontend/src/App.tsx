@@ -11,14 +11,16 @@ import AdminPanel from './pages/AdminPanel'
 import Onboarding from './pages/Onboarding'
 import Equipo from './pages/Equipo'
 
-function useCountdownDisplay() {
+function CountdownDisplay() {
   const [next, setNext] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     let alive = true
     const tick = async () => {
       try {
-        const r = await fetch('/api/extraction/status', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+        const token = localStorage.getItem('token')
+        if (!token) return
+        const r = await fetch('/api/extraction/status', { headers: { Authorization: `Bearer ${token}` } })
         const data = await r.json()
         if (alive && data.next_refresh_at) setNext(new Date(data.next_refresh_at).getTime())
       } catch {}
@@ -28,12 +30,12 @@ function useCountdownDisplay() {
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => { alive = false; clearInterval(id); clearInterval(t) }
   }, [])
-  if (!next) return ''
+  if (!next) return null
   const ms = Math.max(0, next - now)
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
   const s = Math.floor((ms % 60000) / 1000)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return <span className="text-white/40 font-mono tabular-nums text-[11px]">{String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span>
 }
 
 function AppContent() {
@@ -87,9 +89,7 @@ function AppContent() {
           <span className="opacity-60 hidden sm:inline">{user.email}</span>
           {user.is_admin && <span className="bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[10px] font-bold">ADMIN</span>}
           <span className="bg-green-500 px-1.5 py-0.5 rounded text-[10px]">{user.plan}</span>
-          <span className="text-white/40 font-mono tabular-nums text-[11px] hidden sm:inline">
-            {useCountdownDisplay()}
-          </span>
+          <CountdownDisplay />
           <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition">Salir</button>
         </div>
       </nav>
