@@ -745,6 +745,18 @@ async def debug_network(user: User = Depends(get_current_user)):
 async def startup():
     await init_db()
     async with async_session() as db:
+        try:
+            await db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(30)"))
+            await db.commit()
+        except Exception: pass
+        try:
+            await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS hora_envio INTEGER"))
+            await db.commit()
+        except Exception: pass
+        try:
+            await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS dias_envio VARCHAR(50) DEFAULT '1,2,3,4,5'"))
+            await db.commit()
+        except Exception: pass
         result = await db.execute(select(User).where(User.email == "totalappgt@gmail.com"))
         if not result.scalar_one_or_none():
             admin = User(email="totalappgt@gmail.com", password_hash=hash_password("admintotal"),
