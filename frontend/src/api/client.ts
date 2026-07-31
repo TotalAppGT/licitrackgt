@@ -68,4 +68,5 @@ export const api = {
     request('/payments/create-checkout', { method: 'POST', body: JSON.stringify({ price_id: priceId }) }),
   startExtraction: () => request('/extraction/start', { method: 'POST' }),
   extractionLogs: () => request('/extraction/logs'),
+  extraccionStatus: () => request('/extraction/status'),
 }

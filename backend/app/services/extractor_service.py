@@ -6,6 +6,9 @@ from app.config import settings
 
 OCDS_BASE = "https://ocds.guatecompras.gt"
 
+next_refresh_at = None
+last_refresh_at = None
+
 async def obtener_meses_disponibles():
     async with httpx.AsyncClient(timeout=30) as cl:
         r = await cl.get(f"{OCDS_BASE}/v1/releases/bulk")
@@ -143,13 +146,17 @@ async def procesar_alertas():
 
 async def background_auto_refresh():
     import asyncio
+    from datetime import datetime, timedelta
+    global next_refresh_at, last_refresh_at
     while True:
         try:
             await refresh_ultimo_mes()
+            last_refresh_at = datetime.utcnow()
         except Exception as e:
             print(f"Auto-refresh error: {e}")
         try:
             await procesar_alertas()
         except Exception as e:
             print(f"Alertas error: {e}")
+        next_refresh_at = datetime.utcnow() + timedelta(hours=6)
         await asyncio.sleep(6 * 3600)

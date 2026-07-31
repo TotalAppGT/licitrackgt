@@ -131,6 +131,7 @@ class FiltrosQuery(BaseModel):
     monto_min: Optional[float] = None
     monto_max: Optional[float] = None
     destinatario: Optional[str] = None
+    destinatarios: Optional[str] = None
     page: int = 1
     per_page: int = 50
 
@@ -197,11 +198,13 @@ async def export_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_
         writer.writerow(CSV_HEADERS)
         yield buf.getvalue()
         buf = io.StringIO()
+        writer = csv.writer(buf)
         for r in rows_batches():
             writer.writerow(_serialize(r))
             if buf.tell() > 1024 * 512:
                 yield buf.getvalue()
                 buf = io.StringIO()
+                writer = csv.writer(buf)
         yield buf.getvalue()
 
     filename = f"licitaciones_{f.anio or 'todos'}_{f.mes or 'todos'}.csv"
@@ -396,6 +399,15 @@ async def extraction_logs(user: User = Depends(get_current_user), db: AsyncSessi
     return {"logs": [{"anio": r.anio, "mes": r.mes, "records": r.records_count,
                       "status": r.status, "fecha": str(r.created_at)[:19]} for r in rows]}
 
+@app.get("/api/extraction/status")
+async def extraction_status(user: User = Depends(get_current_user)):
+    from app.services.extractor_service import next_refresh_at, last_refresh_at
+    return {
+        "next_refresh_at": next_refresh_at.isoformat() + "Z" if next_refresh_at else None,
+        "last_refresh_at": last_refresh_at.isoformat() + "Z" if last_refresh_at else None,
+        "interval_hours": 6,
+    }
+
 # ============================================================
 # ALERTAS (keywords) Y ENVIO POR CORREO
 # ============================================================
@@ -444,29 +456,70 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
     rows = (await db.execute(q.order_by(Licitacion.fecha_publicacion.desc()))).scalars().all()
     if not rows:
         raise HTTPException(status_code=400, detail="No hay resultados para enviar")
-    destino = (f.destinatario or user.email).strip()
-    if "@" not in destino:
-        raise HTTPException(status_code=400, detail="Correo invalido")
+    raw = (f.destinatarios or f.destinatario or user.email).strip()
+    destinos = [d.strip() for d in raw.replace(";", ",").split(",") if d.strip()]
+    validos = [d for d in destinos if "@" in d and "." in d]
+    if not validos:
+        raise HTTPException(status_code=400, detail="Correo(s) invalido(s)")
+    titulo_filtro = f.texto or f"filtros ({len(rows)} resultados)"
+
     import io, csv
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(CSV_HEADERS)
     for r in rows:
         writer.writerow(_serialize(r))
-    titulo_filtro = f.texto or "sin keyword"
-    html = f"""<div style="font-family:Arial;max-width:600px;margin:auto">
+    csv_bytes = buf.getvalue().encode("utf-8-sig")
+
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Licitaciones"
+    header_fill = PatternFill("solid", fgColor="1A3A5C")
+    header_font = Font(color="FFFFFF", bold=True)
+    ws.append(CSV_HEADERS)
+    for col_idx, _ in enumerate(CSV_HEADERS, start=1):
+        c = ws.cell(row=1, column=col_idx)
+        c.fill = header_fill; c.font = header_font; c.alignment = Alignment(horizontal="center")
+    for r in rows:
+        ws.append(_serialize(r))
+    for col_idx, header in enumerate(CSV_HEADERS, start=1):
+        col = get_column_letter(col_idx)
+        max_len = max(len(str(header)), *(len(str(c.value or "")) for c in ws[col][1:min(len(ws[col]), 100)]))
+        ws.column_dimensions[col].width = min(max_len + 2, 60)
+    ws.auto_filter.ref = ws.dimensions
+    ws.freeze_panes = "A2"
+    xbio = BytesIO()
+    wb.save(xbio); xbio.seek(0)
+    xlsx_bytes = xbio.getvalue()
+
+    fila = "".join(
+        f'<tr><td>{m["nog"]}</td><td>{m["fecha"]}</td><td><a href="https://guatecompras.gt/procesos/{m["nog"]}" style="color:#1a5fb4">{m["titulo"]}</a></td>'
+        f'<td style="text-align:right">Q{float(m["monto"]):,.0f}</td><td>{m["entidad"]}</td></tr>'
+        for m in rows[:80])
+    html = f"""<div style="font-family:Arial;max-width:700px;margin:auto;color:#222">
         <h2 style="color:#1a3a5c">LiciTrackGT - {len(rows)} licitaciones</h2>
-        <p>Resultados para: <b>{titulo_filtro}</b></p>
-        <p>Adjuntamos el detalle en CSV. <a href="{settings.FRONTEND_URL}">Ir a LiciTrackGT</a></p>
+        <p>Filtro: <b>{titulo_filtro}</b></p>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">
+            <tr style="background:#1a3a5c;color:#fff;text-align:left">
+                <th>NOG</th><th>Fecha</th><th>Titulo</th><th>Monto</th><th>Entidad</th></tr>
+            {fila}
+        </table>
+        <p style="margin-top:16px">Adjunto: <b>XLSX</b> con el detalle completo de {len(rows)} licitaciones.</p>
+        <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
         <p style="color:#888;font-size:12px">Recibes este correo por solicitud en tu cuenta.</p></div>"""
+
     from app.services.email_service import enviar_correo
     try:
-        await enviar_correo([destino], f"LiciTrackGT: {len(rows)} licitaciones - {titulo_filtro[:50]}",
-                            html, (f"licitaciones_{f.anio or 'todos'}_{f.mes or 'todos'}.csv",
-                                   buf.getvalue().encode("utf-8-sig"), "text/csv"))
+        await enviar_correo(validos, f"LiciTrackGT: {len(rows)} licitaciones - {titulo_filtro[:50]}",
+                            html, (f"licitaciones_{f.anio or 'todos'}_{f.mes or 'todos'}.xlsx",
+                                   xlsx_bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al enviar correo: {str(e)[:200]}")
-    return {"ok": True, "enviado_a": destino, "registros": len(rows)}
+    return {"ok": True, "enviado_a": validos, "registros": len(rows)}
 
 # ============================================================
 # STARTUP
