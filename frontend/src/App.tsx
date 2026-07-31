@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -7,6 +7,7 @@ import Suscripcion from './pages/Suscripcion'
 import Alertas from './pages/Alertas'
 import Pipeline from './pages/Pipeline'
 import AdminPanel from './pages/AdminPanel'
+import Onboarding from './pages/Onboarding'
 
 function AppContent() {
   const { user, logout, loading } = useAuth()
@@ -15,6 +16,13 @@ function AppContent() {
   const [waPhone, setWaPhone] = useState('')
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<any>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (user && !localStorage.getItem('onboarding_done')) {
+      setShowOnboarding(true)
+    }
+  }, [user])
 
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>
   if (!user) return <Login />
@@ -136,6 +144,7 @@ function AppContent() {
           </div>
         </div>
       )}
+      {showOnboarding && <Onboarding onComplete={() => { setShowOnboarding(false); localStorage.setItem('onboarding_done', '1') }} />}
     </div>
   )
 }

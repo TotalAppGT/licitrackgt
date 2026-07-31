@@ -42,6 +42,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     name: str = ""
+    whatsapp_phone: Optional[str] = None
 
 # ============================================================
 # AUTH ROUTES
@@ -64,6 +65,8 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email ya registrado")
     user = User(email=req.email, password_hash=hash_password(req.password), name=req.name)
+    if req.whatsapp_phone:
+        user.whatsapp_phone = req.whatsapp_phone.strip()
     db.add(user); await db.commit(); await db.refresh(user)
     token = create_token({"sub": user.email})
     return TokenResponse(access_token=token, user={
