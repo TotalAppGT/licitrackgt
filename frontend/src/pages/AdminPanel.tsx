@@ -44,7 +44,7 @@ export default function AdminPanel() {
 
       <div className="grid grid-cols-2 gap-4 mb-8">
         <MiniCard label="Alertas activas" value={stats.total_alerts_count} />
-        <MiniCard label="Pipeline items" value={stats.total_pipeline_count} />
+        <MiniCard label="Items en Pipeline" value={stats.total_pipeline_count} />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -60,7 +60,7 @@ export default function AdminPanel() {
               <th className="text-left p-3">Estado</th>
               <th className="text-left p-3">WhatsApp</th>
               <th className="text-left p-3">Creado</th>
-              <th className="text-center p-3">Accion</th>
+              <th className="text-center p-3">Acción</th>
             </tr>
           </thead>
           <tbody>

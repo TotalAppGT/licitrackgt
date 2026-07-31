@@ -109,7 +109,7 @@ export default function Suscripcion() {
       <div className="text-center mb-12">
         <h2 className="text-3xl font-extrabold text-gray-900">Planes que crecen contigo</h2>
         <p className="text-gray-500 mt-3 text-lg max-w-xl mx-auto">
-          Desde exploracion gratuita hasta inteligencia de mercado completa. Sin contratos, cancela cuando quieras.
+          Desde exploración gratuita hasta inteligencia de mercado completa. Sin contratos, cancela cuando quieras.
         </p>
       </div>
 

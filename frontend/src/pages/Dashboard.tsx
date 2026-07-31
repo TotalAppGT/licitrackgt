@@ -17,9 +17,9 @@ export default function Dashboard() {
   if (!stats) return <div className="text-center py-20 text-gray-400">Sin datos</div>
 
   const cards = [
-    { label: 'Total Licitaciones', value: stats.total.toLocaleString(), color: '#1a3a5c' },
+    { label: 'Total de licitaciones', value: stats.total.toLocaleString(), color: '#1a3a5c' },
     { label: 'Entidades', value: stats.entidades.toLocaleString(), color: '#2b579a' },
-    { label: 'Monto Promedio', value: 'Q' + Math.round(stats.monto_prom).toLocaleString(), color: '#27ae60' },
+    { label: 'Monto promedio', value: 'Q' + Math.round(stats.monto_prom).toLocaleString(), color: '#27ae60' },
     { label: 'En 2026', value: stats.total_2026.toLocaleString(), color: '#e67e22' },
   ]
 
@@ -52,7 +52,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-4">Top Departamentos</h3>
+          <h3 className="font-bold text-gray-800 mb-4">Principales departamentos</h3>
           <div className="space-y-2">
             {stats.por_departamento.slice(0, 8).map((d: any) => (
               <div key={d.nombre} className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export default function Dashboard() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-4">Top 15 Entidades</h3>
+          <h3 className="font-bold text-gray-800 mb-4">Principales entidades</h3>
           <div className="space-y-2">
             {stats.entidades_top.slice(0, 10).map((e: any) => (
               <div key={e.nombre} className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-4">Categorias</h3>
+          <h3 className="font-bold text-gray-800 mb-4">Categorías</h3>
           <div className="space-y-3">
             {stats.categorias_top.map((c: any) => (
               <div key={c.nombre} className="flex items-center justify-between">

@@ -3,6 +3,15 @@ import { api } from '../api/client'
 import { toast } from '../components/Toast'
 
 const ETAPAS = ['deteccion', 'analisis', 'preparacion', 'presentacion', 'adjudicacion', 'ganada', 'perdida']
+const ETAPA_LABEL: Record<string, string> = {
+  deteccion: 'Detección',
+  analisis: 'Análisis',
+  preparacion: 'Preparación',
+  presentacion: 'Presentación',
+  adjudicacion: 'Adjudicación',
+  ganada: 'Ganada',
+  perdida: 'Perdida',
+}
 const ETAPA_COLOR: Record<string, string> = {
   deteccion: 'bg-gray-100 text-gray-700',
   analisis: 'bg-blue-100 text-blue-700',
@@ -61,21 +70,21 @@ export default function Pipeline() {
           <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">Pipeline</h4>
           <button onClick={() => setShowAdd(true)}
             className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition text-sm">
-            + Agregar licitacion
+            + Agregar licitación
           </button>
           <p className="text-xs text-gray-400 mt-2">{items.length} / {limite} licitaciones</p>
 
           <div className="mt-4 space-y-1">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Proximas a vencer</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Próximas a vencer</p>
             {deadlines.length === 0 ? (
-              <p className="text-xs text-gray-400">Sin fechas de presentacion</p>
+              <p className="text-xs text-gray-400">Sin fechas de presentación</p>
             ) : deadlines.map(d => {
               const dias = diasFaltan(d.fecha_presentacion)
               return (
                 <div key={d.nog} className={`text-xs p-2 rounded-lg ${dias && dias <= 3 ? 'bg-red-50 border border-red-100' : 'bg-gray-50'}`}>
                   <div className="font-medium truncate">{d.titulo || d.nog}</div>
                   <div className={dias && dias <= 3 ? 'text-red-600 font-bold' : 'text-gray-500'}>
-                    {dias !== null && dias > 0 ? `${dias} dias` : dias === 0 ? 'HOY' : 'Vencida'}
+                    {dias !== null && dias > 0 ? `${dias} días` : dias === 0 ? 'HOY' : 'Vencida'}
                   </div>
                 </div>
               )
@@ -89,7 +98,7 @@ export default function Pipeline() {
           <div className="p-4 border-b border-gray-100 flex flex-wrap gap-2">
             {ETAPAS.map(e => (
               <span key={e} className={`text-xs px-3 py-1 rounded-full font-medium ${ETAPA_COLOR[e]}`}>
-                {e[0].toUpperCase() + e.slice(1)} ({items.filter(i => i.etapa === e).length})
+                  {ETAPA_LABEL[e]} ({items.filter(i => i.etapa === e).length})
               </span>
             ))}
           </div>
@@ -97,7 +106,7 @@ export default function Pipeline() {
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="text-center py-20 text-gray-400 text-sm">
-                Agrega licitaciones desde Filtros para hacerles seguimiento aqui.
+                Agrega licitaciones desde Filtros para hacerles seguimiento aquí.
               </div>
             ) : items.map(item => {
               const dias = diasFaltan(item.fecha_presentacion)
@@ -110,7 +119,7 @@ export default function Pipeline() {
                           className="text-xs font-mono text-blue-600 hover:underline">{item.nog}</a>
                         <select value={item.etapa} onChange={e => cambiarEtapa(item.id, e.target.value)}
                           className={`text-xs px-2 py-0.5 rounded-full border-0 font-medium cursor-pointer ${ETAPA_COLOR[item.etapa]}`}>
-                          {ETAPAS.map(e => <option key={e} value={e}>{e[0].toUpperCase() + e.slice(1)}</option>)}
+                          {ETAPAS.map(e => <option key={e} value={e}>{ETAPA_LABEL[e]}</option>)}
                         </select>
                         {item.probabilidad > 0 && (
                           <span className="text-xs text-gray-500">{item.probabilidad}% prob.</span>
@@ -127,13 +136,13 @@ export default function Pipeline() {
                       <div className="flex items-center gap-2">
                         <input type="date" value={item.fecha_presentacion || ''}
                           onChange={e => actualizar(item.id, { fecha_presentacion: e.target.value })}
-                          className="text-xs border rounded px-2 py-1 w-[130px]" title="Fecha de presentacion" />
+                          className="text-xs border rounded px-2 py-1 w-[130px]" title="Fecha de presentación" />
                         <button onClick={() => eliminar(item.id)}
                           className="text-xs text-red-400 hover:text-red-600">x</button>
                       </div>
                       {dias !== null && dias >= 0 && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${dias <= 3 ? 'bg-red-100 text-red-700' : dias <= 7 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {dias === 0 ? 'HOY' : `${dias} dias`}
+                          {dias === 0 ? 'HOY' : `${dias} días`}
                         </span>
                       )}
                     </div>

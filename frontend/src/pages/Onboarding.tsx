@@ -67,9 +67,9 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
             </div>
             <button onClick={() => setStep(1)}
               className="mt-6 bg-[#1a3a5c] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#2b579a] transition">
-              Comenzar configuracion
+              Comenzar configuración
             </button>
-            <p className="text-xs text-gray-400 mt-2 cursor-pointer hover:underline" onClick={onComplete}>Saltar</p>
+            <p className="text-xs text-gray-400 mt-2 cursor-pointer hover:underline" onClick={onComplete}>Omitir</p>
           </div>
         )}
 
@@ -110,7 +110,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
                 Guardar y empezar
               </button>
             </div>
-            <p className="text-xs text-gray-400 text-center cursor-pointer hover:underline" onClick={onComplete}>Configurar despues</p>
+            <p className="text-xs text-gray-400 text-center cursor-pointer hover:underline" onClick={onComplete}>Configurar después</p>
           </div>
         )}
       </div>

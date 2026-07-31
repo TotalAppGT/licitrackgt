@@ -54,7 +54,7 @@ export default function Alertas() {
       <div className="lg:col-span-2">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Mis Keywords</h3>
+            <h3 className="font-semibold text-gray-800">Mis Palabras Clave</h3>
             <span className="text-xs text-gray-400">{alerts.length} / {limite}</span>
           </div>
           <div className="p-4">
@@ -73,7 +73,7 @@ export default function Alertas() {
           <div className="divide-y">
             {alerts.length === 0 ? (
               <div className="text-center py-16 text-gray-400 text-sm">
-                Aun no tienes keywords. Agrega la primera arriba y recibe alertas por correo.
+                Aún no tienes palabras clave. Agrega la primera y recibe alertas.
               </div>
             ) : alerts.map(a => (
               <div key={a.id} className="p-4 hover:bg-gray-50 transition">
@@ -105,10 +105,10 @@ export default function Alertas() {
 
                 {editing === a.id && (
                   <div className="mt-3 bg-gray-50 rounded-lg p-4 border border-gray-200 animate-slide-down">
-                    <p className="text-xs font-semibold text-gray-500 mb-3">Configurar horario de envio</p>
+                    <p className="text-xs font-semibold text-gray-500 mb-3">Configurar horario de envío</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-gray-500">Hora (0-23, o None = inmediato)</label>
+                        <label className="text-xs text-gray-500">Hora de envío</label>
                         <select value={editHora === null ? 'none' : editHora}
                           onChange={e => setEditHora(e.target.value === 'none' ? null : parseInt(e.target.value))}
                           className="w-full text-xs border rounded-lg p-2 mt-1">
@@ -117,7 +117,7 @@ export default function Alertas() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500">Dias de la semana</label>
+                        <label className="text-xs text-gray-500">Días de la semana</label>
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {DIAS_SEMANA.map((d, i) => (
                             <button key={i} onClick={() => toggleDia(String(i))}
@@ -162,10 +162,10 @@ export default function Alertas() {
           <ReportesProgramados />
           <hr className="my-4" />
           <div className="text-xs text-gray-500 space-y-2">
-            <p><b>Keywords:</b> detectan licitaciones por coincidencia en el titulo.</p>
-            <p><b>Inmediato:</b> se enviaran en cada ciclo de actualizacion (cada 15 min).</p>
-            <p><b>Programado:</b> se enviaran solo a la hora y dias que configures.</p>
-            <p className="text-blue-600 font-medium">Plan Pro: hasta 50 keywords + 5 reportes programados.</p>
+            <p><b>Palabras clave:</b> detectan licitaciones por coincidencia en el titulo.</p>
+            <p><b>Inmediato:</b> se enviarán en cada ciclo de actualizacion (cada 15 min).</p>
+            <p><b>Programado:</b> se enviarán solo a la hora y dias que configures.</p>
+            <p className="text-blue-600 font-medium">Plan Pro: hasta 50 palabras clave + 5 reportes programados.</p>
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ function ReportesProgramados() {
             </div>
           </div>
           <div>
-            <label className="text-[10px] text-gray-500">Keywords (separadas por coma)</label>
+            <label className="text-[10px] text-gray-500">Palabras clave (separadas por coma)</label>
             <input type="text" value={form.keywords} onChange={e => setForm({ ...form, keywords: e.target.value })}
               className="w-full text-xs border rounded p-1 mt-0.5" placeholder="hospital, equipo medico" />
           </div>

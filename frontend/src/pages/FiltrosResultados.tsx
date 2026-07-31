@@ -162,7 +162,7 @@ export default function FiltrosResultados() {
               </div>
             </div>
             <button onClick={() => search()} className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition">
-              {loading ? 'Buscando...' : 'Buscar'}
+              {loading ? 'Buscando licitaciones...' : 'Buscar licitaciones'}
             </button>
             <button onClick={() => { setFilters({}); setResults(null); setPage(1) }}
               className="w-full text-sm text-gray-500 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
@@ -182,12 +182,12 @@ export default function FiltrosResultados() {
                 <span className="text-sm font-medium">{results.total.toLocaleString()} resultados</span>
                 <div className="flex gap-2 items-center">
                   <div className="flex gap-1 items-center">
-                    <input type="text" placeholder="Correo(s), separados por coma..." value={destinatario}
+                    <input type="text" placeholder="Correos separados por coma..." value={destinatario}
                       onChange={e => setDestinatario(e.target.value)}
                       className="text-xs border rounded-lg px-2 py-1.5 w-60" title="Puedes poner varios correos separados por coma" />
                     <button onClick={sendEmail} disabled={sending || !destinatario}
                       className="text-xs bg-blue-700 text-white px-3 py-1.5 rounded-lg hover:bg-blue-800 transition disabled:opacity-50">
-                      {sending ? 'Enviando...' : 'Enviar'}
+                      {sending ? 'Enviando correo...' : 'Enviar por correo'}
                     </button>
                   </div>
                   <button onClick={() => download('csv')} disabled={!!exporting}
@@ -198,7 +198,7 @@ export default function FiltrosResultados() {
                     className="text-xs bg-emerald-700 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-800 transition disabled:opacity-50">
                     {exporting === 'xlsx' ? 'Generando...' : 'Excel (XLSX)'}
                   </button>
-                  <span className="text-gray-500 text-xs">Pagina {page} de {totalPages}</span>
+                  <span className="text-gray-500 text-xs">Página {page} de {totalPages}</span>
                 </div>
               </div>
               <div className="overflow-x-auto">

@@ -9,6 +9,7 @@ import Alertas from './pages/Alertas'
 import Pipeline from './pages/Pipeline'
 import AdminPanel from './pages/AdminPanel'
 import Onboarding from './pages/Onboarding'
+import Equipo from './pages/Equipo'
 
 function AppContent() {
   const { user, logout, loading } = useAuth()
@@ -29,12 +30,13 @@ function AppContent() {
   if (!user) return <Login />
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'dashboard', label: 'Panel' },
     { id: 'filtros', label: 'Filtros' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'alertas', label: 'Alertas' },
     { id: 'suscripcion', label: 'Suscripcion' },
     ...(user.is_admin ? [{ id: 'admin', label: 'Admin' }] : []),
+    ...(user.plan !== 'free' ? [{ id: 'equipo', label: 'Equipo' }] : []),
   ]
 
   return (
@@ -74,6 +76,7 @@ function AppContent() {
         {tab === 'alertas' && <Alertas />}
         {tab === 'suscripcion' && <Suscripcion />}
         {tab === 'admin' && <AdminPanel />}
+        {tab === 'equipo' && <Equipo />}
       </main>
 
       {showProfile && (
