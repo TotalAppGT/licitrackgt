@@ -26,6 +26,7 @@ export const api = {
   register: (email: string, password: string, name: string) =>
     request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
   me: () => request('/auth/me'),
+  updateProfile: (data: any) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
   dashboard: () => request('/dashboard/stats'),
   licitaciones: (filters: any, page = 1) =>
     request('/licitaciones', { method: 'POST', body: JSON.stringify({ ...filters, page, per_page: 50 }) }),

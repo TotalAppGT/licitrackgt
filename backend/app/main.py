@@ -74,7 +74,41 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 async def me(user: User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email, "name": user.name,
             "is_admin": user.is_admin, "plan": user.subscription_plan,
-            "status": user.subscription_status}
+            "status": user.subscription_status, "whatsapp_phone": user.whatsapp_phone or ""}
+
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+    whatsapp_phone: Optional[str] = None
+
+@app.put("/api/auth/profile")
+async def update_profile(req: UpdateProfileRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if req.name is not None: user.name = req.name
+    if req.whatsapp_phone is not None: user.whatsapp_phone = req.whatsapp_phone.strip() or None
+    await db.commit()
+    return {"ok": True, "whatsapp_phone": user.whatsapp_phone or ""}
+
+@app.api_route("/api/whatsapp/webhook", methods=["GET", "POST"], include_in_schema=False)
+async def whatsapp_webhook(request: Request):
+    from app.services.whatsapp_service import verificar_webhook
+    if request.method == "GET":
+        params = request.query_params
+        challenge = verificar_webhook(
+            params.get("hub.mode", ""), params.get("hub.verify_token", ""),
+            params.get("hub.challenge", "")
+        )
+        if challenge:
+            from fastapi.responses import PlainTextResponse
+            return PlainTextResponse(challenge, status_code=200)
+        raise HTTPException(status_code=403, detail="Token invalido")
+    else:
+        import json
+        body = await request.body()
+        try:
+            data = json.loads(body)
+            print(f"WhatsApp webhook recibido: {json.dumps(data, indent=2)[:300]}")
+        except:
+            pass
+        return {"ok": True}
 
 # ============================================================
 # DASHBOARD
@@ -161,6 +195,17 @@ def _serialize(r):
 CSV_HEADERS = ["NOG", "OCID", "Fecha", "Titulo", "Entidad", "Monto", "Moneda",
                "Estado", "Categoria", "Metodo", "Modalidad", "Departamento"]
 
+def _relevance(titulo: str, keyword: str) -> int:
+    if not keyword: return 0
+    tl = titulo.lower()
+    kw = keyword.lower()
+    score = 0
+    parts = [k.strip() for k in kw.replace(",", " ").replace(";", " ").split() if k.strip()]
+    if not parts: parts = [kw]
+    for p in parts:
+        if p in tl: score += 100 // max(1, len(parts))
+    return min(100, score)
+
 @app.post("/api/licitaciones")
 async def query_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     q = _apply_filtros(select(Licitacion), f)
@@ -168,11 +213,13 @@ async def query_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_u
     offset = (f.page - 1) * f.per_page
     q = q.order_by(Licitacion.fecha_publicacion.desc()).offset(offset).limit(f.per_page)
     rows = (await db.execute(q)).scalars().all()
+    keyword_text = f.texto.lower().strip() if f.texto else ""
     return {"total": total or 0, "page": f.page, "data": [{
         "nog": r.nog, "ocid": r.ocid, "fecha": str(r.fecha_publicacion) if r.fecha_publicacion else "",
         "titulo": r.titulo, "entidad": r.entidad_compradora, "monto": r.monto or 0,
         "estado": r.estado, "categoria": r.categoria, "metodo": r.metodo,
-        "modalidad": r.modalidad, "departamento": r.departamento
+        "modalidad": r.modalidad, "departamento": r.departamento,
+        "relevancia": _relevance(r.titulo or "", keyword_text) if keyword_text else None,
     } for r in rows]}
 
 @app.post("/api/licitaciones/export")

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { api } from '../api/client'
 
-interface User { id: number; email: string; name: string; is_admin: boolean; plan: string; status: string }
+interface User { id: number; email: string; name: string; is_admin: boolean; plan: string; status: string; whatsapp_phone?: string }
 interface AuthCtx { user: User | null; login: (e: string, p: string) => Promise<void>; logout: () => void; loading: boolean }
 
 const AuthContext = createContext<AuthCtx>({} as AuthCtx)

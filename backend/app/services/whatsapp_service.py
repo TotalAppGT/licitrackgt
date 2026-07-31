@@ -1,0 +1,40 @@
+import httpx
+from app.config import settings
+
+WHATSAPP_API = "https://graph.facebook.com/v22.0"
+
+
+async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
+    if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=20) as cl:
+            resp = await cl.post(
+                f"{WHATSAPP_API}/{settings.WHATSAPP_PHONE_ID}/messages",
+                headers={
+                    "Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": telefono,
+                    "type": "text",
+                    "text": {"preview_url": False, "body": mensaje},
+                },
+            )
+        if resp.status_code >= 400:
+            print(f"WhatsApp error {resp.status_code}: {resp.text[:200]}")
+            return False
+        return True
+    except Exception as e:
+        print(f"WhatsApp exception: {e}")
+        return False
+
+
+def verificar_webhook(mode: str, token: str, challenge: str) -> str | None:
+    if not settings.WHATSAPP_VERIFY_TOKEN:
+        return None
+    if mode == "subscribe" and token == settings.WHATSAPP_VERIFY_TOKEN:
+        return challenge
+    return None

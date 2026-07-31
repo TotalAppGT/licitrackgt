@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = "LiciTrackGT <no-reply@totalappgt.online>"
     RESEND_API_KEY: str = ""
+    WHATSAPP_TOKEN: str = ""
+    WHATSAPP_PHONE_ID: str = ""
+    WHATSAPP_VERIFY_TOKEN: str = ""
 
     class Config:
         env_file = ".env"

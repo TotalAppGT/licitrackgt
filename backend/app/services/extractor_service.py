@@ -1,7 +1,7 @@
 import httpx
 from datetime import date, datetime, timedelta
 from app.database import async_session
-from app.models import Licitacion, ExtractionLog, KeywordAlert, ScheduledReport, PipelineItem
+from app.models import Licitacion, ExtractionLog, KeywordAlert, ScheduledReport, PipelineItem, User
 from app.config import settings
 
 OCDS_BASE = "https://ocds.guatecompras.gt"
@@ -144,10 +144,20 @@ async def procesar_alertas():
                     <p><a href="{settings.FRONTEND_URL}">Abrir LiciTrackGT</a></p>
                     <p style="color:#888;font-size:12px">Para dejar de recibir alertas, elimina la keyword en tu panel.</p></div>"""
                 from app.services.email_service import enviar_correo
+                from app.services.whatsapp_service import enviar_whatsapp
                 try:
                     await enviar_correo([u.email], f"LiciTrackGT: {len(matches)} nuevas coincidencias", html)
                 except Exception as e:
                     print(f"Error alerta para {u.email}: {e}")
+                if u.whatsapp_phone:
+                    wa_text = f"LiciTrackGT: {len(matches)} coincidencias{hora_str}\n" + "\n".join(
+                        f"  {m['keyword']}: {m['titulo'][:60]} Q{float(m['monto']):,.0f}"
+                        for m in matches[:10]
+                    ) + f"\n\nVer mas: {settings.FRONTEND_URL}"
+                    try:
+                        await enviar_whatsapp(u.whatsapp_phone, wa_text)
+                    except Exception as e:
+                        print(f"Error WhatsApp para {u.email}: {e}")
 
 async def procesar_scheduled_reports():
     from sqlalchemy import select
@@ -216,6 +226,7 @@ async def procesar_scheduled_reports():
                 <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
                 <p style="color:#888;font-size:12px">Reporte programado desde tu cuenta. Puedes desactivarlo en Alertas.</p></div>"""
             from app.services.email_service import enviar_correo
+            from app.services.whatsapp_service import enviar_whatsapp
             try:
                 await enviar_correo(recips, f"LiciTrackGT: reporte programado - {keyword_text[:50]}",
                                     html, (f"reporte_{rep.anio or 'todo'}_{rep.mes or 'todo'}.xlsx",
@@ -224,6 +235,55 @@ async def procesar_scheduled_reports():
                 await db.commit()
             except Exception as e:
                 print(f"Error reporte programado id={rep.id}: {e}")
+            if user.whatsapp_phone:
+                try:
+                    await enviar_whatsapp(user.whatsapp_phone,
+                                          f"LiciTrackGT Reporte: {len(rows)} licitaciones para '{keyword_text[:40]}'\nAdjunto XLSX en tu correo.\n{settings.FRONTEND_URL}")
+                except Exception as e:
+                    print(f"Error WhatsApp reporte id={rep.id}: {e}")
+
+async def procesar_deadline_alerts():
+    from sqlalchemy import select
+    hoy = date.today()
+    async with async_session() as db:
+        items = (await db.execute(
+            select(PipelineItem).where(
+                PipelineItem.fecha_presentacion != None,
+                PipelineItem.etapa.notin_(["ganada", "perdida"]),
+            ).order_by(PipelineItem.fecha_presentacion)
+        )).scalars().all()
+        for p in items:
+            if not p.fecha_presentacion:
+                continue
+            dias = (p.fecha_presentacion - hoy).days
+            if dias not in (0, 1, 2, 3):
+                continue
+            user = await db.get(User, p.user_id)
+            if not user or user.subscription_plan == "free" or user.subscription_status != "active":
+                continue
+            label = "HOY" if dias == 0 else f"{dias} dia(s)" if dias <= 1 else f"{dias} dias"
+            asunto = f"ALERTA: Presentacion en {label} - {p.titulo[:40]}"
+            html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
+                <h2 style="color:#c00">LiciTrackGT - Recordatorio de presentacion</h2>
+                <p style="font-size:16px"><b>{p.titulo}</b></p>
+                <p>NOG: <a href="https://guatecompras.gt/procesos/{p.nog}">{p.nog}</a></p>
+                <p>Fecha de presentacion: <b style="color:#c00">{p.fecha_presentacion}</b> ({label})</p>
+                <p>Entidad: {p.entidad or 'N/A'} | Etapa: {p.etapa}</p>
+                {f'<p>Monto propuesto: Q{float(p.monto_propuesto or 0):,.0f}</p>' if p.monto_propuesto else ''}
+                <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Ir al Pipeline</a></p>
+            </div>"""
+            from app.services.email_service import enviar_correo
+            from app.services.whatsapp_service import enviar_whatsapp
+            try:
+                await enviar_correo([user.email], asunto, html)
+            except Exception as e:
+                print(f"Error deadline alert email {user.email}: {e}")
+            if user.whatsapp_phone:
+                try:
+                    await enviar_whatsapp(user.whatsapp_phone,
+                                          f"LiciTrackGT: Presentacion en {label}\n{p.titulo[:80]}\nNOG: {p.nog}\nEntidad: {p.entidad or 'N/A'}\nVer: https://guatecompras.gt/procesos/{p.nog}")
+                except Exception as e:
+                    print(f"Error deadline alert whatsapp {user.email}: {e}")
 
 async def background_auto_refresh():
     import asyncio
@@ -247,4 +307,8 @@ async def background_auto_refresh():
             await procesar_scheduled_reports()
         except Exception as e:
             print(f"Scheduled reports error: {e}")
+        try:
+            await procesar_deadline_alerts()
+        except Exception as e:
+            print(f"Deadline alerts error: {e}")
         await asyncio.sleep(900)

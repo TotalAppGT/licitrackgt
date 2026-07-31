@@ -212,6 +212,7 @@ export default function FiltrosResultados() {
                       <th className="text-left p-3 font-medium">Modalidad</th>
                       <th className="text-left p-3 font-medium">Departamento</th>
                       <th className="text-left p-3 font-medium">Estado</th>
+                      {results.data?.[0]?.relevancia != null && <th className="text-center p-3 font-medium w-16">Relev.</th>}
                       <th className="text-center p-3 font-medium w-20"></th>
                     </tr>
                   </thead>
@@ -228,6 +229,13 @@ export default function FiltrosResultados() {
                         <td className="p-3 text-xs max-w-[140px] truncate">{r.modalidad}</td>
                         <td className="p-3 text-xs">{r.departamento}</td>
                         <td className="p-3 text-xs"><span className="bg-gray-100 px-2 py-0.5 rounded">{r.estado}</span></td>
+                        {r.relevancia != null && <td className="p-3 text-xs text-center">
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                            r.relevancia >= 80 ? 'bg-green-100 text-green-700' :
+                            r.relevancia >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>{r.relevancia}%</span>
+                        </td>}
                         <td className="p-3 text-center">
                           <button onClick={() => addToPipeline(r)}
                             className="text-xs bg-gray-100 hover:bg-blue-100 hover:text-blue-700 text-gray-500 px-2 py-1 rounded transition"
