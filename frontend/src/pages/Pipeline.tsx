@@ -67,7 +67,13 @@ export default function Pipeline() {
     <div className="grid lg:grid-cols-4 gap-6">
       <div className="lg:col-span-1 space-y-4">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">Pipeline</h4>
+          <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">¿Cómo funciona?</h4>
+          <div className="text-xs text-gray-500 space-y-2">
+            <p><b>Etapas:</b> mueve cada licitación según su avance: Detección → Análisis → Preparación → Presentación → Adjudicación.</p>
+            <p><b>Fecha de presentación:</b> cuándo debes entregar tu oferta. El sistema te avisa 3 días antes por correo y WhatsApp.</p>
+            <p><b>Probabilidad:</b> qué tan probable crees que es ganar (0-100%). Te ayuda a priorizar.</p>
+            <p><b>Monto propuesto:</b> cuánto planeas ofertar.</p>
+          </div>
           <button onClick={() => setShowAdd(true)}
             className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition text-sm">
             + Agregar licitación
@@ -133,12 +139,12 @@ export default function Pipeline() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                         <input type="date" value={item.fecha_presentacion || ''}
                           onChange={e => actualizar(item.id, { fecha_presentacion: e.target.value })}
-                          className="text-xs border rounded px-2 py-1 w-[130px]" title="Fecha de presentación" />
+                          className="text-xs border rounded px-2 py-1 w-[130px]" title="Fecha de presentación de la oferta" />
                         <button onClick={() => eliminar(item.id)}
-                          className="text-xs text-red-400 hover:text-red-600">x</button>
+                          className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded border border-red-200 transition">Quitar</button>
                       </div>
                       {dias !== null && dias >= 0 && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${dias <= 3 ? 'bg-red-100 text-red-700' : dias <= 7 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
