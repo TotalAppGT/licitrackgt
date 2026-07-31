@@ -61,9 +61,9 @@ function AppContent() {
     { id: 'filtros', label: 'Filtros' },
     { id: 'pipeline', label: 'Seguimiento' },
     { id: 'alertas', label: 'Alertas' },
-    { id: 'suscripcion', label: 'Suscripción' },
-    ...(user.is_admin ? [{ id: 'admin', label: 'Admin' }] : []),
-    ...(user.plan !== 'free' ? [{ id: 'equipo', label: 'Equipo' }] : []),
+    ...(!user.is_team_member ? [{ id: 'suscripcion', label: 'Suscripción' }] : []),
+    ...(user.is_admin && !user.is_team_member ? [{ id: 'admin', label: 'Admin' }] : []),
+    ...(user.plan !== 'free' && !user.is_team_member ? [{ id: 'equipo', label: 'Equipo' }] : []),
   ]
 
   return (

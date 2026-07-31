@@ -99,7 +99,8 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 async def me(user: User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email, "name": user.name,
             "is_admin": user.is_admin, "plan": user.subscription_plan,
-            "status": user.subscription_status, "whatsapp_phone": user.whatsapp_phone or ""}
+            "status": user.subscription_status, "whatsapp_phone": user.whatsapp_phone or "",
+            "is_team_member": user.main_user_id is not None, "owner_id": user.main_user_id}
 
 class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
