@@ -322,7 +322,8 @@ async def recurrent_webhook(request: Request):
             secret_bytes = secret.encode()
         signed = f"{svix_id}.{svix_ts}.{body.decode('utf-8')}".encode()
         expected = hmac.new(secret_bytes, signed, hashlib.sha256).digest()
-        provided = base64.b64decode(svix_sig.split(",")[0][3:] or "")
+        parts = svix_sig.split(",")
+        provided = base64.b64decode(parts[1]) if len(parts) > 1 else b""
         if not hmac.compare_digest(expected, provided):
             raise HTTPException(status_code=400, detail="Firma invalida")
 
