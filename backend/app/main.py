@@ -502,7 +502,7 @@ class AlertRequest(BaseModel):
 async def mis_alertas(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(KeywordAlert).where(KeywordAlert.user_id == user.id).order_by(KeywordAlert.id))).scalars().all()
     limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("keywords", 5)
-    return {"alerts": [{"id": a.id, "keyword": a.keyword, "hora_envio": a.hora_envio, "dias_envio": a.dias_envio, "frecuencia": a.frecuencia or "diario"} for a in rows], "limite": limite}
+    return {"alerts": [{"id": a.id, "keyword": a.keyword, "hora_envio": a.hora_envio, "dias_envio": a.dias_envio, "frecuencia": a.frecuencia or "diario", "ultimo_envio": str(a.ultimo_envio)[:19] if a.ultimo_envio else None} for a in rows], "limite": limite}
 
 @app.post("/api/alerts")
 async def crear_alerta(req: AlertRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

@@ -21,10 +21,16 @@ export default function Alertas() {
   useEffect(cargar, [])
 
   const agregar = async () => {
-    if (!keyword.trim()) return
+    const kw = keyword.trim()
+    if (!kw) { toast.show('Escribe una palabra clave primero', 'warning'); return }
     setLoading(true)
-    try { await api.crearAlerta(keyword.trim()); setKeyword(''); cargar() }
-    catch (e: any) { toast.show(e.message, 'error') }
+    try { await api.crearAlerta(kw); setKeyword(''); cargar(); toast.show('Palabra clave agregada', 'success') }
+    catch (e: any) { 
+      const msg = e.message || ''
+      if (msg.includes('registrada')) toast.show('Ya tienes esta palabra clave', 'warning')
+      else if (msg.includes('alcanzado')) toast.show('Llegaste al limite de tu plan. Sube de plan para mas.', 'warning')
+      else toast.show(msg, 'error')
+    }
     finally { setLoading(false) }
   }
 
@@ -42,11 +48,16 @@ export default function Alertas() {
   }
 
   const toggleDia = (dia: string) => {
-    const arr = (editDias || '').split(',').filter(d => d.trim())
+      const arr = (editDias || '').split(',').filter(d => d.trim())
     const idx = arr.indexOf(dia)
     if (idx >= 0) arr.splice(idx, 1)
     else arr.push(dia)
     setEditDias(arr.sort((a, b) => parseInt(a) - parseInt(b)).join(','))
+  }
+
+  const FREQ_LABELS: Record<string, string> = {
+    '15min': 'Cada 15 min', '30min': 'Cada 30 min', '1hora': 'Cada hora',
+    '6horas': 'Cada 6 horas', 'diario': 'Diario'
   }
 
   return (

@@ -92,8 +92,8 @@ export default function FiltrosResultados() {
 
   return (
     <div className="grid lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-1 space-y-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="lg:col-span-1">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 sticky top-20 overflow-y-auto max-h-[calc(100vh-120px)]">
           <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">Filtros</h4>
           <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3 flex items-center gap-2">
             {hasNext ? (

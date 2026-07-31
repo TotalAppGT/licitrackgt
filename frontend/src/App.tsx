@@ -32,16 +32,16 @@ function AppContent() {
   const tabs = [
     { id: 'dashboard', label: 'Panel' },
     { id: 'filtros', label: 'Filtros' },
-    { id: 'pipeline', label: 'Pipeline' },
+    { id: 'pipeline', label: 'Seguimiento' },
     { id: 'alertas', label: 'Alertas' },
-    { id: 'suscripcion', label: 'Suscripcion' },
+    { id: 'suscripcion', label: 'Suscripción' },
     ...(user.is_admin ? [{ id: 'admin', label: 'Admin' }] : []),
     ...(user.plan !== 'free' ? [{ id: 'equipo', label: 'Equipo' }] : []),
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-[#1a3a5c] text-white px-6 py-3 flex items-center justify-between shadow-lg">
+      <nav className="bg-[#1a3a5c] text-white px-6 py-3 flex items-center justify-between shadow-lg sticky top-0 z-40">
         <div className="flex items-center gap-8">
           <h1 className="text-xl font-extrabold tracking-wider">LiciTrackGT</h1>
           <div className="flex gap-1">
