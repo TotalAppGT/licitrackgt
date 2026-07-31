@@ -852,6 +852,10 @@ async def startup():
             await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS dias_envio VARCHAR(50) DEFAULT '1,2,3,4,5'"))
             await db.commit()
         except Exception: pass
+        try:
+            await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS ultimo_envio TIMESTAMPTZ"))
+            await db.commit()
+        except Exception: pass
         result = await db.execute(select(User).where(User.email == "totalappgt@gmail.com"))
         if not result.scalar_one_or_none():
             admin = User(email="totalappgt@gmail.com", password_hash=hash_password("admintotal"),

@@ -105,15 +105,24 @@ async def procesar_alertas():
     from app.models import User
     hora_actual = datetime.utcnow().hour
     dia_actual = str(datetime.utcnow().isoweekday())
+    ahora = datetime.utcnow()
     async with async_session() as db:
         alertas = (await db.execute(select(KeywordAlert))).scalars().all()
         user_kw_map = {}
+        alerts_to_update = []
         for a in alertas:
             if a.hora_envio is not None and a.hora_envio != hora_actual:
                 continue
             if a.dias_envio and dia_actual not in a.dias_envio.split(","):
                 continue
+            if a.hora_envio is not None:
+                if a.ultimo_envio and a.ultimo_envio.date() == ahora.date():
+                    continue
+            else:
+                if a.ultimo_envio and a.ultimo_envio.date() == ahora.date():
+                    continue
             user_kw_map.setdefault(a.user_id, []).append(a.keyword)
+            alerts_to_update.append(a)
         if not user_kw_map:
             return
         hora_str = f" {hora_actual}:00" if any(a.hora_envio is not None for a in alertas) else ""
@@ -156,8 +165,11 @@ async def procesar_alertas():
                     ) + f"\n\nVer mas: {settings.FRONTEND_URL}"
                     try:
                         await enviar_whatsapp(u.whatsapp_phone, wa_text)
-                    except Exception as e:
-                        print(f"Error WhatsApp para {u.email}: {e}")
+                except Exception as e:
+                    print(f"Error WhatsApp para {u.email}: {e}")
+        for a in alerts_to_update:
+            a.ultimo_envio = datetime.utcnow()
+        await db.commit()
 
 async def procesar_scheduled_reports():
     from sqlalchemy import select
