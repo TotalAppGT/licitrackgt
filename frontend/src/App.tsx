@@ -13,6 +13,8 @@ function AppContent() {
   const [tab, setTab] = useState('dashboard')
   const [showProfile, setShowProfile] = useState(false)
   const [waPhone, setWaPhone] = useState('')
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<any>(null)
 
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>
   if (!user) return <Login />
@@ -66,25 +68,63 @@ function AppContent() {
       </main>
 
       {showProfile && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowProfile(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">Notificaciones</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => { setShowProfile(false); setTestResult(null) }}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Configurar notificaciones</h3>
+            
+            {testResult && (
+              <div className={`rounded-lg p-3 mb-4 text-sm ${testResult.email && testResult.whatsapp ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'}`}>
+                <div className="flex items-center gap-2">
+                  <span>{testResult.email ? 'Correo enviado' : 'Fallo correo'}</span>
+                  <span className="text-xs">{testResult.whatsapp ? '| WhatsApp entregado' : testResult.whatsapp_error ? `| WhatsApp: ${testResult.whatsapp_error}` : ''}</span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-500">Telefono WhatsApp para alertas</label>
+                <label className="text-xs text-gray-500">Tu correo para alertas</label>
+                <input type="text" value={user.email} disabled
+                  className="w-full text-sm border rounded-lg p-2 mt-1 bg-gray-50 text-gray-600" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Telefono WhatsApp (con codigo de pais)</label>
                 <input type="text" value={waPhone} placeholder="502XXXXXXXX"
                   onChange={e => setWaPhone(e.target.value)}
                   className="w-full text-sm border rounded-lg p-2 mt-1" />
-                <p className="text-[10px] text-gray-400 mt-1">Ej: 50255551234 (codigo de pais sin +)</p>
+                <p className="text-[10px] text-gray-400 mt-1">Ej: 50235187153 (Guatemala). Sin el +</p>
               </div>
-              <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowProfile(false)}
-                  className="px-4 py-2 text-sm border rounded-lg">Cancelar</button>
+              
+              <div className="flex gap-2">
+                <button onClick={async () => {
+                  setTesting(true); setTestResult(null)
+                  try {
+                    const token = localStorage.getItem('token')
+                    const res = await fetch('/api/auth/test-notification', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ whatsapp_phone: waPhone || undefined }),
+                    })
+                    const data = await res.json()
+                    setTestResult(data)
+                  } catch (e: any) { setTestResult({ email: false, whatsapp: false, whatsapp_error: 'Error de conexion' }) }
+                  finally { setTesting(false) }
+                }}
+                  disabled={testing}
+                  className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {testing ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : null}
+                  Probar notificaciones
+                </button>
                 <button onClick={async () => {
                   try {
-                    await (await import('./api/client')).api.updateProfile({ whatsapp_phone: waPhone })
-                    alert('Numero guardado. Recibiras alertas por WhatsApp cuando haya coincidencias.')
-                    setShowProfile(false)
+                    const token = localStorage.getItem('token')
+                    await fetch('/api/auth/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ whatsapp_phone: waPhone }),
+                    })
+                    await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+                    setShowProfile(false); setTestResult(null)
                     window.location.reload()
                   } catch (e: any) { alert(e.message) }
                 }}

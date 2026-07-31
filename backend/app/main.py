@@ -87,6 +87,39 @@ async def update_profile(req: UpdateProfileRequest, user: User = Depends(get_cur
     await db.commit()
     return {"ok": True, "whatsapp_phone": user.whatsapp_phone or ""}
 
+class TestNotificationRequest(BaseModel):
+    whatsapp_phone: Optional[str] = None
+
+@app.post("/api/auth/test-notification")
+async def test_notification(req: TestNotificationRequest, user: User = Depends(get_current_user)):
+    from app.services.email_service import enviar_correo
+    from app.services.whatsapp_service import enviar_whatsapp
+    result = {"email": False, "whatsapp": False}
+    try:
+        await enviar_correo([user.email], "LiciTrackGT - Prueba de notificaciones",
+            '<div style="font-family:Arial;max-width:600px;margin:auto"><h2 style="color:#1a3a5c">LiciTrackGT</h2>'
+            '<p>Esta es una <b>prueba</b> de que las notificaciones por correo funcionan correctamente.</p>'
+            '<p style="color:green;font-weight:bold">Correo configurado exitosamente.</p>'
+            '<p style="color:#888;font-size:12px">Recibiras tus alertas y reportes en esta direccion.</p></div>')
+        result["email"] = True
+    except Exception as e:
+        result["email_error"] = str(e)[:100]
+    phone = req.whatsapp_phone or user.whatsapp_phone
+    if phone:
+        try:
+            ok = await enviar_whatsapp(phone,
+                "LiciTrackGT - Prueba de WhatsApp\n\n"
+                "Este es un mensaje de prueba para confirmar que recibiras tus alertas por aqui.\n\n"
+                "Cuando haya nuevas licitaciones que coincidan con tus keywords, te llegara un aviso como este.")
+            result["whatsapp"] = ok
+            if not ok:
+                result["whatsapp_error"] = "No se pudo enviar (verifica token/número)"
+        except Exception as e:
+            result["whatsapp_error"] = str(e)[:100]
+    else:
+        result["whatsapp_error"] = "No has configurado un numero de WhatsApp"
+    return result
+
 @app.api_route("/api/whatsapp/webhook", methods=["GET", "POST"], include_in_schema=False)
 async def whatsapp_webhook(request: Request):
     from app.services.whatsapp_service import verificar_webhook
