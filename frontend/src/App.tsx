@@ -66,35 +66,31 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-[#1a3a5c] text-white px-6 py-3 flex items-center justify-between shadow-lg sticky top-0 z-40">
-        <div className="flex items-center gap-8">
-          <h1 className="text-xl font-extrabold tracking-wider">LiciTrackGT</h1>
-          <div className="flex gap-1">
+      <nav className="bg-[#1a3a5c] text-white px-4 py-2 flex items-center justify-between shadow-lg sticky top-0 z-40">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-extrabold tracking-wider">LiciTrackGT</h1>
+          <div className="flex gap-0.5">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${tab === t.id ? 'bg-white/20' : 'hover:bg-white/10'}`}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2 text-xs">
           <button onClick={() => { setWaPhone(user.whatsapp_phone || ''); setShowProfile(true) }}
-            className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition text-xs flex items-center gap-1"
+            className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition flex items-center gap-1"
             title="Configurar notificaciones">
-            {user.whatsapp_phone ? (
-              <><span className="text-green-400">&#9679;</span> WhatsApp</>
-            ) : (
-              <><span className="text-gray-400">&#9678;</span> +WhatsApp</>
-            )}
+            {user.whatsapp_phone ? <span className="text-green-400">&#9679;</span> : <span className="text-gray-400">&#9678;</span>}
           </button>
-          <span className="opacity-80">{user.email}</span>
-          {user.is_admin && <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs font-bold">ADMIN</span>}
-          <span className="bg-green-500 px-2 py-0.5 rounded text-xs">{user.plan}</span>
-          <span className="text-xs text-white/60 font-mono tabular-nums">
+          <span className="opacity-60 hidden sm:inline">{user.email}</span>
+          {user.is_admin && <span className="bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[10px] font-bold">ADMIN</span>}
+          <span className="bg-green-500 px-1.5 py-0.5 rounded text-[10px]">{user.plan}</span>
+          <span className="text-white/40 font-mono tabular-nums text-[11px] hidden sm:inline">
             {useCountdownDisplay()}
           </span>
-          <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">Salir</button>
+          <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition">Salir</button>
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 py-6">
