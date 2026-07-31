@@ -11,10 +11,8 @@ async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
         async with httpx.AsyncClient(timeout=20) as cl:
             resp = await cl.post(
                 f"{WHATSAPP_API}/{settings.WHATSAPP_PHONE_ID}/messages",
-                headers={
-                    "Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
-                    "Content-Type": "application/json",
-                },
+                headers={"Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
+                         "Content-Type": "application/json"},
                 json={
                     "messaging_product": "whatsapp",
                     "recipient_type": "individual",
@@ -23,9 +21,12 @@ async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
                     "text": {"preview_url": False, "body": mensaje},
                 },
             )
+        data = resp.json()
         if resp.status_code >= 400:
             print(f"WhatsApp error {resp.status_code}: {resp.text[:200]}")
             return False
+        ws_id = (data.get("messages") or [{}])[0].get("id", "")
+        print(f"WhatsApp enviado a {telefono}, msg_id={ws_id}")
         return True
     except Exception as e:
         print(f"WhatsApp exception: {e}")

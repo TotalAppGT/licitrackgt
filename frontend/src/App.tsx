@@ -6,6 +6,7 @@ import FiltrosResultados from './pages/FiltrosResultados'
 import Suscripcion from './pages/Suscripcion'
 import Alertas from './pages/Alertas'
 import Pipeline from './pages/Pipeline'
+import AdminPanel from './pages/AdminPanel'
 
 function AppContent() {
   const { user, logout, loading } = useAuth()
@@ -22,6 +23,7 @@ function AppContent() {
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'alertas', label: 'Alertas' },
     { id: 'suscripcion', label: 'Suscripcion' },
+    ...(user.is_admin ? [{ id: 'admin', label: 'Admin' }] : []),
   ]
 
   return (
@@ -60,6 +62,7 @@ function AppContent() {
         {tab === 'pipeline' && <Pipeline />}
         {tab === 'alertas' && <Alertas />}
         {tab === 'suscripcion' && <Suscripcion />}
+        {tab === 'admin' && <AdminPanel />}
       </main>
 
       {showProfile && (

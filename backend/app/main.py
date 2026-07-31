@@ -717,6 +717,65 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
     return {"ok": True, "enviado_a": validos, "registros": len(rows)}
 
 # ============================================================
+# ADMIN
+# ============================================================
+class AdminUpdateUserRequest(BaseModel):
+    plan: str
+    keywords_limit: int
+
+@app.get("/api/admin/usuarios")
+async def admin_list_users(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Solo admin")
+    result = await db.execute(select(User).order_by(User.id))
+    users = result.scalars().all()
+    return [{
+        "id": u.id, "email": u.email, "name": u.name,
+        "plan": u.subscription_plan or "free",
+        "status": u.subscription_status or "inactive",
+        "whatsapp_phone": u.whatsapp_phone or "",
+        "created_at": str(u.created_at)[:19] if u.created_at else None,
+    } for u in users]
+
+@app.get("/api/admin/stats")
+async def admin_stats(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Solo admin")
+    total_users = await db.scalar(select(func.count(User.id)))
+    paying_users = await db.scalar(
+        select(func.count(User.id)).where(User.subscription_status == "active", User.subscription_plan != "free")
+    )
+    total_alerts = await db.scalar(select(func.count(KeywordAlert.id)))
+    total_pipeline = await db.scalar(select(func.count(PipelineItem.id)))
+    total_scheduled = await db.scalar(select(func.count(ScheduledReport.id)))
+    total_licitaciones = await db.scalar(select(func.count(Licitacion.id)))
+    paying_users_list = (await db.execute(
+        select(User).where(User.subscription_status == "active", User.subscription_plan != "free")
+    )).scalars().all()
+    mrr = sum(RECURRENTE_PLANS.get(u.subscription_plan, {}).get("price", 0) for u in paying_users_list)
+    return {
+        "total_users": total_users or 0,
+        "paying_users": paying_users or 0,
+        "total_alerts_count": total_alerts or 0,
+        "total_pipeline_count": total_pipeline or 0,
+        "total_scheduled_reports_count": total_scheduled or 0,
+        "total_licitaciones": total_licitaciones or 0,
+        "mrr": mrr,
+    }
+
+@app.patch("/api/admin/usuarios/{user_id}")
+async def admin_update_user(user_id: int, req: AdminUpdateUserRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Solo admin")
+    target = await db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    target.subscription_plan = req.plan
+    target.keywords_limit = req.keywords_limit
+    await db.commit()
+    return {"ok": True, "id": target.id, "plan": target.subscription_plan, "keywords_limit": target.keywords_limit}
+
+# ============================================================
 # STARTUP
 # ============================================================
 @app.get("/api/debug/network", include_in_schema=False)
