@@ -109,6 +109,8 @@ class FiltrosQuery(BaseModel):
     categoria: Optional[str] = None
     entidad: Optional[str] = None
     texto: Optional[str] = None
+    anio: Optional[int] = None
+    mes: Optional[int] = None
     fecha_desde: Optional[str] = None
     fecha_hasta: Optional[str] = None
     monto_min: Optional[float] = None
@@ -116,17 +118,22 @@ class FiltrosQuery(BaseModel):
     page: int = 1
     per_page: int = 50
 
-@app.post("/api/licitaciones")
-async def query_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    q = select(Licitacion)
+def _apply_filtros(q, f):
     if f.estatus: q = q.where(Licitacion.estado == f.estatus)
     if f.categoria: q = q.where(Licitacion.categoria == f.categoria)
     if f.entidad: q = q.where(Licitacion.entidad_compradora.ilike(f"%{f.entidad}%"))
     if f.texto: q = q.where(Licitacion.titulo.ilike(f"%{f.texto}%"))
+    if f.anio: q = q.where(Licitacion.anio == f.anio)
+    if f.mes: q = q.where(Licitacion.mes == f.mes)
     if f.fecha_desde: q = q.where(Licitacion.fecha_publicacion >= f.fecha_desde)
     if f.fecha_hasta: q = q.where(Licitacion.fecha_publicacion <= f.fecha_hasta)
     if f.monto_min: q = q.where(Licitacion.monto >= f.monto_min)
     if f.monto_max: q = q.where(Licitacion.monto <= f.monto_max)
+    return q
+
+@app.post("/api/licitaciones")
+async def query_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    q = _apply_filtros(select(Licitacion), f)
     total = await db.scalar(select(func.count()).select_from(q.subquery()))
     offset = (f.page - 1) * f.per_page
     q = q.order_by(Licitacion.fecha_publicacion.desc()).offset(offset).limit(f.per_page)
@@ -136,6 +143,29 @@ async def query_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_u
         "titulo": r.titulo, "entidad": r.entidad_compradora, "monto": r.monto or 0,
         "estado": r.estado, "categoria": r.categoria, "metodo": r.metodo
     } for r in rows]}
+
+@app.post("/api/licitaciones/export")
+async def export_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    q = _apply_filtros(select(Licitacion), f)
+    rows = (await db.execute(q.order_by(Licitacion.fecha_publicacion.desc()))).scalars().all()
+    import io, csv
+    from fastapi.responses import StreamingResponse
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["NOG", "OCID", "Fecha", "Titulo", "Entidad", "Monto", "Moneda", "Estado", "Categoria", "Metodo"])
+    for r in rows:
+        writer.writerow([r.nog, r.ocid, str(r.fecha_publicacion) if r.fecha_publicacion else "",
+                         r.titulo, r.entidad_compradora, r.monto or 0, r.moneda or "GTQ",
+                         r.estado, r.categoria, r.metodo])
+    buf.seek(0)
+    return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
+                             headers={"Content-Disposition": "attachment; filename=licitaciones.csv"})
+
+@app.get("/api/licitaciones/meses")
+async def meses_disponibles(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(Licitacion.anio, Licitacion.mes).distinct())).all()
+    meses = sorted({(r[0], r[1]) for r in rows if r[0]}, key=lambda x: (x[0], x[1]), reverse=True)
+    return {"meses": [{"anio": y, "mes": m} for y, m in meses]}
 
 @app.get("/api/licitaciones/opciones")
 async def opciones_filtro(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -150,12 +180,13 @@ class CreateCheckoutRequest(BaseModel):
     price_id: str
 
 @app.post("/api/payments/create-checkout")
-async def create_checkout(req: CreateCheckoutRequest, user: User = Depends(get_current_user)):
+async def create_checkout(req: CreateCheckoutRequest, request: Request, user: User = Depends(get_current_user)):
     plan_key = None
     for k, v in RECURRENTE_PLANS.items():
         if v["price_id"] == req.price_id: plan_key = k; break
     if not plan_key:
         raise HTTPException(status_code=400, detail="Plan no valido")
+    base = settings.FRONTEND_URL.rstrip("/") if settings.FRONTEND_URL else str(request.base_url).rstrip("/")
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(f"{RECURRENTE_API}/checkouts", headers={
@@ -163,8 +194,8 @@ async def create_checkout(req: CreateCheckoutRequest, user: User = Depends(get_c
                 "Content-Type": "application/json",
             }, json={
                 "items": [{"price_id": req.price_id, "quantity": 1}],
-                "success_url": f"{settings.FRONTEND_URL}/suscripcion?success=true",
-                "cancel_url": f"{settings.FRONTEND_URL}/suscripcion?canceled=true",
+                "success_url": f"{base}/suscripcion?success=true",
+                "cancel_url": f"{base}/suscripcion?canceled=true",
                 "metadata": {"user_id": str(user.id), "plan": plan_key},
                 "user_id": user.email,
             })
