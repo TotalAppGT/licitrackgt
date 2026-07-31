@@ -68,29 +68,38 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-[#1a3a5c] text-white px-4 py-2 flex items-center justify-between shadow-lg sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-extrabold tracking-wider">LiciTrackGT</h1>
+      <nav className="bg-gradient-to-r from-[#0d2137] to-[#1a3a5c] text-white px-4 py-2.5 flex items-center justify-between shadow-lg sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-extrabold tracking-wider flex items-center gap-2">
+            <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            LiciTrack<span className="text-cyan-400">GT</span>
+          </h1>
           <div className="flex gap-0.5">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${tab === t.id ? 'bg-white/20' : 'hover:bg-white/10'}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${tab === t.id ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <button onClick={() => { setWaPhone(user.whatsapp_phone || ''); setShowProfile(true) }}
-            className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition flex items-center gap-1"
-            title="Configurar notificaciones">
-            {user.whatsapp_phone ? <span className="text-green-400">&#9679;</span> : <span className="text-gray-400">&#9678;</span>}
-          </button>
-          <span className="opacity-60 hidden sm:inline">{user.email}</span>
-          {user.is_admin && <span className="bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[10px] font-bold">ADMIN</span>}
-          <span className="bg-green-500 px-1.5 py-0.5 rounded text-[10px]">{user.plan}</span>
+        <div className="flex items-center gap-3 text-xs">
           <CountdownDisplay />
-          <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition">Salir</button>
+          <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1">
+            {user.whatsapp_phone ? (
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="WhatsApp activo"></span>
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-gray-400" title="WhatsApp no configurado"></span>
+            )}
+            <button onClick={() => { setWaPhone(user.whatsapp_phone || ''); setShowProfile(true) }}
+              className="hover:text-cyan-400 transition flex items-center gap-1">
+              {user.whatsapp_phone ? 'Notificaciones' : 'Configurar alertas'}
+            </button>
+          </div>
+          <span className="text-white/50 hidden lg:inline">{user.email}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${user.plan === 'enterprise' ? 'bg-amber-500 text-black' : user.plan === 'pro' ? 'bg-blue-400 text-black' : 'bg-green-500 text-black'}`}>{user.plan}</span>
+          {user.is_admin && <span className="bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[10px] font-bold">ADMIN</span>}
+          <button onClick={logout} className="hover:bg-white/10 px-2 py-1 rounded-lg transition text-white/60 hover:text-white">Salir</button>
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 py-6">
