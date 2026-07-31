@@ -303,34 +303,54 @@ async def create_checkout(req: CreateCheckoutRequest, request: Request, user: Us
 
 @app.post("/api/payments/webhook")
 async def recurrent_webhook(request: Request):
-    payload = await request.body()
-    import json
+    import json, hmac, hashlib, time
+    body = await request.body()
     try:
-        event = json.loads(payload)
+        event = json.loads(body)
     except:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
+    if settings.RECURRENTE_WEBHOOK_SECRET:
+        svix_id = request.headers.get("svix-id", "")
+        svix_ts = request.headers.get("svix-timestamp", "")
+        svix_sig = request.headers.get("svix-signature", "")
+        secret = settings.RECURRENTE_WEBHOOK_SECRET.split("_", 1)[-1]
+        import base64
+        try:
+            secret_bytes = base64.b64decode(secret)
+        except Exception:
+            secret_bytes = secret.encode()
+        signed = f"{svix_id}.{svix_ts}.{body.decode('utf-8')}".encode()
+        expected = hmac.new(secret_bytes, signed, hashlib.sha256).digest()
+        provided = base64.b64decode(svix_sig.split(",")[0][3:] or "")
+        if not hmac.compare_digest(expected, provided):
+            raise HTTPException(status_code=400, detail="Firma invalida")
+
     async def handle_event(data: dict):
-        event_type = data.get("event_type", "")
-        if event_type == "subscription.create":
-            checkout = data.get("checkout", {})
-            meta = checkout.get("metadata", {}) or {}
-            user_id = meta.get("user_id")
-            plan = meta.get("plan", "pro")
-            email = data.get("customer", {}).get("email", "")
-            async with async_session() as db:
-                if user_id:
+        event_type = data.get("event_type", "") or data.get("type", "")
+        checkout = data.get("checkout") or {}
+        meta = data.get("metadata") or checkout.get("metadata") or {}
+        user_id = meta.get("user_id") or checkout.get("user_id")
+        plan = meta.get("plan", "pro")
+        email = data.get("customer", {}).get("email", "")
+        async with async_session() as db:
+            user = None
+            if user_id:
+                try:
                     user = await db.get(User, int(user_id))
-                elif email:
-                    result = await db.execute(select(User).where(User.email == email))
-                    user = result.scalar_one_or_none()
-                else:
+                except (TypeError, ValueError):
                     user = None
-                if user:
+            if not user and email:
+                result = await db.execute(select(User).where(User.email == email))
+                user = result.scalar_one_or_none()
+            if user:
+                if event_type in ("subscription.create", "subscription.reactivate", "subscription.unpause"):
                     user.subscription_plan = plan
                     user.subscription_status = "active"
                     user.keywords_limit = RECURRENTE_PLANS.get(plan, {}).get("keywords", 50)
-                    await db.commit()
+                elif event_type in ("subscription.cancel", "subscription.pause", "subscription.past_due"):
+                    user.subscription_status = "inactive"
+                await db.commit()
     try:
         await handle_event(event)
     except Exception as e:
