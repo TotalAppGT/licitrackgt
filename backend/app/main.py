@@ -24,6 +24,7 @@ PIPELINE_ETAPAS = ["deteccion", "analisis", "preparacion", "presentacion", "adju
 
 def _send_invite_email(to_email: str, name: str, owner_email: str, temp_password: str | None):
     import asyncio
+    url = settings.FRONTEND_URL.strip('/') if settings.FRONTEND_URL else 'https://licitrackgt-production.up.railway.app'
     async def _do():
         try:
             from app.services.email_service import enviar_correo
@@ -32,7 +33,7 @@ def _send_invite_email(to_email: str, name: str, owner_email: str, temp_password
                 <p>Hola {name or 'usuario'},</p>
                 <p>{owner_email} te ha invitado a colaborar en <b>LiciTrackGT</b>.</p>
                 {f'<p>Tu contraseña temporal: <b style="font-size:18px;background:#f0f0f0;padding:4px 8px;border-radius:4px">{temp_password}</b></p>' if temp_password else '<p>Ya tienes una cuenta. Tu acceso ha sido actualizado.</p>'}
-                <p>Ingresa en: <a href="{settings.FRONTEND_URL}">{settings.FRONTEND_URL}</a></p>
+                <p>Ingresa en: <a href="{url}" style="color:#1a5fb4">{url}</a></p>
                 <p style="margin-top:16px">Desde aqui podras buscar licitaciones, configurar alertas y dar seguimiento a tus oportunidades.</p>
                 <p style="color:#888;font-size:12px">LiciTrackGT - Monitoreo inteligente de Guatecompras</p></div>"""
             await enviar_correo([to_email], "Has sido invitado a LiciTrackGT", html)
