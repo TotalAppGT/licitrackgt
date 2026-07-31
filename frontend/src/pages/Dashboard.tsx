@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
-interface Stats { total: number; entidades: number; monto_prom: number; total_2026: number; entidades_top: any[]; categorias_top: any[] }
+const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+interface Stats { total: number; entidades: number; monto_prom: number; total_2026: number; entidades_top: any[]; categorias_top: any[]; por_mes: any[]; por_departamento: any[] }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -21,6 +23,9 @@ export default function Dashboard() {
     { label: 'En 2026', value: stats.total_2026.toLocaleString(), color: '#e67e22' },
   ]
 
+  const maxMes = Math.max(...(stats.por_mes.map(m => m.cantidad) || [1]))
+  const maxDep = Math.max(...(stats.por_departamento.map(d => d.cantidad) || [1]))
+
   return (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -30,6 +35,36 @@ export default function Dashboard() {
             <div className="text-sm text-gray-500 mt-1">{c.label}</div>
           </div>
         ))}
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-800 mb-4">Licitaciones por mes 2026</h3>
+          <div className="flex items-end gap-2 h-40">
+            {stats.por_mes.map(m => (
+              <div key={m.mes} className="flex-1 flex flex-col items-center gap-1">
+                <div className="text-[10px] font-semibold text-gray-500">{m.cantidad.toLocaleString()}</div>
+                <div className="w-full bg-gradient-to-t from-[#1a3a5c] to-[#2b579a] rounded-t"
+                  style={{ height: `${Math.max(4, (m.cantidad / maxMes) * 100)}%` }}></div>
+                <div className="text-[10px] text-gray-400">{MESES[m.mes - 1]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-800 mb-4">Top Departamentos</h3>
+          <div className="space-y-2">
+            {stats.por_departamento.slice(0, 8).map((d: any) => (
+              <div key={d.nombre} className="flex items-center gap-3">
+                <div className="flex-1 text-sm truncate">{d.nombre}</div>
+                <div className="text-sm font-semibold text-blue-600">{d.cantidad.toLocaleString()}</div>
+                <div className="w-24 bg-gray-100 rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min(100, (d.cantidad / maxDep) * 100)}%` }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

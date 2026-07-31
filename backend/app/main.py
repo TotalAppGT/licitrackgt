@@ -94,11 +94,23 @@ async def dashboard_stats(user: User = Depends(get_current_user), db: AsyncSessi
         .where(Licitacion.categoria != "")
         .group_by(Licitacion.categoria).order_by(text("cnt DESC")).limit(10)
     )).all()
+    meses_2026 = (await db.execute(
+        select(Licitacion.mes, func.count().label("cnt"))
+        .where(Licitacion.anio == 2026).group_by(Licitacion.mes).order_by(Licitacion.mes)
+    )).all()
+    por_mes = [{"mes": m, "cantidad": c} for m, c in meses_2026]
+    por_departamento = (await db.execute(
+        select(Licitacion.departamento, func.count().label("cnt"))
+        .where(Licitacion.departamento != "").group_by(Licitacion.departamento)
+        .order_by(text("cnt DESC")).limit(10)
+    )).all()
     return {
         "total": total or 0, "entidades": entidades or 0,
         "monto_prom": round(float(monto_prom), 2), "total_2026": total_2026 or 0,
         "entidades_top": [{"nombre": r[0], "cantidad": r[1]} for r in top_entidades],
         "categorias_top": [{"nombre": r[0], "cantidad": r[1]} for r in top_categorias],
+        "por_mes": por_mes,
+        "por_departamento": [{"nombre": r[0], "cantidad": r[1]} for r in por_departamento],
     }
 
 # ============================================================
