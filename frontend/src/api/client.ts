@@ -62,7 +62,22 @@ export const api = {
   misAlertas: () => request('/alerts'),
   crearAlerta: (keyword: string) =>
     request('/alerts', { method: 'POST', body: JSON.stringify({ keyword }) }),
+  actualizarAlerta: (id: number, hora_envio: number | null, dias_envio: string | null) =>
+    request(`/alerts/${id}`, { method: 'PATCH', body: JSON.stringify({ hora_envio, dias_envio }) }),
   eliminarAlerta: (id: number) => request(`/alerts/${id}`, { method: 'DELETE' }),
+  pipeline: () => request('/pipeline'),
+  addPipeline: (licitacion: { nog: string; titulo: string; entidad: string; monto: number; fecha: string }) =>
+    request('/pipeline', { method: 'POST', body: JSON.stringify({ nog: licitacion.nog, titulo: licitacion.titulo, entidad: licitacion.entidad, monto: licitacion.monto, fecha_publicacion: licitacion.fecha }) }),
+  updatePipeline: (id: number, data: any) =>
+    request(`/pipeline/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePipeline: (id: number) => request(`/pipeline/${id}`, { method: 'DELETE' }),
+  deadlines: () => request('/pipeline/deadlines'),
+  scheduledReports: () => request('/scheduled-reports'),
+  createScheduledReport: (data: any) =>
+    request('/scheduled-reports', { method: 'POST', body: JSON.stringify(data) }),
+  toggleScheduledReport: (id: number) =>
+    request(`/scheduled-reports/${id}`, { method: 'PATCH' }),
+  deleteScheduledReport: (id: number) => request(`/scheduled-reports/${id}`, { method: 'DELETE' }),
   planes: () => request('/payments/plans'),
   createCheckout: (priceId: string) =>
     request('/payments/create-checkout', { method: 'POST', body: JSON.stringify({ price_id: priceId }) }),

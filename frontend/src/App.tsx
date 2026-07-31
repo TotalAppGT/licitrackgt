@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import FiltrosResultados from './pages/FiltrosResultados'
 import Suscripcion from './pages/Suscripcion'
 import Alertas from './pages/Alertas'
+import Pipeline from './pages/Pipeline'
 
 function AppContent() {
   const { user, logout, loading } = useAuth()
@@ -16,6 +17,7 @@ function AppContent() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'filtros', label: 'Filtros' },
+    { id: 'pipeline', label: 'Pipeline' },
     { id: 'alertas', label: 'Alertas' },
     { id: 'suscripcion', label: 'Suscripcion' },
   ]
@@ -44,6 +46,7 @@ function AppContent() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'filtros' && <FiltrosResultados />}
+        {tab === 'pipeline' && <Pipeline />}
         {tab === 'alertas' && <Alertas />}
         {tab === 'suscripcion' && <Suscripcion />}
       </main>

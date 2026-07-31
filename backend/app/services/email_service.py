@@ -14,6 +14,7 @@ async def enviar_correo(destinatarios: list[str], asunto: str, html: str,
         "to": destinatarios,
         "subject": asunto,
         "html": html,
+        "options": {"click_tracking": False},
     }
     if adjunto:
         nombre, datos, mime_tipo = adjunto

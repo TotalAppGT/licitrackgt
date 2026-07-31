@@ -62,4 +62,37 @@ class KeywordAlert(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     keyword = Column(String(255), nullable=False)
+    hora_envio = Column(Integer)  # 0-23, null = inmediato
+    dias_envio = Column(String(50), default="1,2,3,4,5")  # 1=Lun...7=Dom
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class PipelineItem(Base):
+    __tablename__ = "pipeline_items"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    nog = Column(String(100), index=True, nullable=False)
+    titulo = Column(Text)
+    entidad = Column(String(500))
+    monto = Column(Float, default=0)
+    fecha_publicacion = Column(Date)
+    etapa = Column(String(50), default="deteccion")
+    fecha_presentacion = Column(Date)
+    monto_propuesto = Column(Float, default=0)
+    probabilidad = Column(Integer, default=0)
+    notas = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class ScheduledReport(Base):
+    __tablename__ = "scheduled_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    hora = Column(Integer, default=8)
+    dias = Column(String(50), default="1,2,3,4,5")
+    enabled = Column(Boolean, default=True)
+    recipients = Column(Text, default="")
+    keywords = Column(Text, default="")
+    anio = Column(Integer)
+    mes = Column(Integer)
+    ultimo_envio = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())

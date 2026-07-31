@@ -57,6 +57,13 @@ export default function FiltrosResultados() {
     finally { setExporting(null) }
   }
 
+  const addToPipeline = async (row: any) => {
+    try {
+      await api.addPipeline({ nog: row.nog, titulo: row.titulo || '', entidad: row.entidad || '', monto: row.monto || 0, fecha: row.fecha || '' })
+      alert('Agregado al pipeline')
+    } catch (e: any) { alert(e.message) }
+  }
+
   const sendEmail = async () => {
     setSending(true)
     try {
@@ -205,6 +212,7 @@ export default function FiltrosResultados() {
                       <th className="text-left p-3 font-medium">Modalidad</th>
                       <th className="text-left p-3 font-medium">Departamento</th>
                       <th className="text-left p-3 font-medium">Estado</th>
+                      <th className="text-center p-3 font-medium w-20"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -220,6 +228,11 @@ export default function FiltrosResultados() {
                         <td className="p-3 text-xs max-w-[140px] truncate">{r.modalidad}</td>
                         <td className="p-3 text-xs">{r.departamento}</td>
                         <td className="p-3 text-xs"><span className="bg-gray-100 px-2 py-0.5 rounded">{r.estado}</span></td>
+                        <td className="p-3 text-center">
+                          <button onClick={() => addToPipeline(r)}
+                            className="text-xs bg-gray-100 hover:bg-blue-100 hover:text-blue-700 text-gray-500 px-2 py-1 rounded transition"
+                            title="Agregar al pipeline">+</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

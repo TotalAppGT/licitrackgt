@@ -1,7 +1,7 @@
 import httpx
-from datetime import date
+from datetime import date, datetime, timedelta
 from app.database import async_session
-from app.models import Licitacion, ExtractionLog
+from app.models import Licitacion, ExtractionLog, KeywordAlert, ScheduledReport, PipelineItem
 from app.config import settings
 
 OCDS_BASE = "https://ocds.guatecompras.gt"
@@ -102,23 +102,28 @@ async def refresh_ultimo_mes():
 
 async def procesar_alertas():
     from sqlalchemy import select
-    from app.models import User, KeywordAlert
+    from app.models import User
+    hora_actual = datetime.utcnow().hour
+    dia_actual = str(datetime.utcnow().isoweekday())
     async with async_session() as db:
         alertas = (await db.execute(select(KeywordAlert))).scalars().all()
-        usuarios = {}
+        user_kw_map = {}
         for a in alertas:
-            usuarios.setdefault(a.user_id, []).append(a.keyword)
-        if not usuarios:
+            if a.hora_envio is not None and a.hora_envio != hora_actual:
+                continue
+            if a.dias_envio and dia_actual not in a.dias_envio.split(","):
+                continue
+            user_kw_map.setdefault(a.user_id, []).append(a.keyword)
+        if not user_kw_map:
             return
-        from datetime import datetime
+        hora_str = f" {hora_actual}:00" if any(a.hora_envio is not None for a in alertas) else ""
         ahora = datetime.utcnow()
-        user_rows = (await db.execute(select(User).where(User.id.in_(list(usuarios.keys()))))).scalars().all()
+        user_rows = (await db.execute(select(User).where(User.id.in_(list(user_kw_map.keys()))))).scalars().all()
         for u in user_rows:
-            keywords = usuarios[u.id]
+            keywords = user_kw_map[u.id]
             if u.subscription_plan in ("free",) or u.subscription_status != "active":
                 continue
             matches = []
-            from app.models import Licitacion
             for kw in keywords:
                 q = select(Licitacion).where(
                     Licitacion.titulo.ilike(f"%{kw}%"),
@@ -133,7 +138,7 @@ async def procesar_alertas():
                     f'<li><b>{m["keyword"]}</b> - <a href="https://guatecompras.gt/procesos/{m["nog"]}">{m["titulo"]}</a> - Q{float(m["monto"]):,.0f} ({m["fecha"]})</li>'
                     for m in matches[:50])
                 html = f"""<div style="font-family:Arial;max-width:600px;margin:auto">
-                    <h2 style="color:#1a3a5c">LiciTrackGT - {len(matches)} alertas este mes</h2>
+                    <h2 style="color:#1a3a5c">LiciTrackGT - {len(matches)} alertas{hora_str}</h2>
                     <p>Nuevas licitaciones que coinciden con tus keywords:</p>
                     <ul>{lista}</ul>
                     <p><a href="{settings.FRONTEND_URL}">Abrir LiciTrackGT</a></p>
@@ -144,19 +149,102 @@ async def procesar_alertas():
                 except Exception as e:
                     print(f"Error alerta para {u.email}: {e}")
 
+async def procesar_scheduled_reports():
+    from sqlalchemy import select
+    from app.models import User
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    hora_actual = datetime.utcnow().hour
+    dia_actual = str(datetime.utcnow().isoweekday())
+    async with async_session() as db:
+        reports = (await db.execute(
+            select(ScheduledReport).where(ScheduledReport.enabled == True)
+        )).scalars().all()
+        for rep in reports:
+            if rep.hora != hora_actual:
+                continue
+            if rep.dias and dia_actual not in rep.dias.split(","):
+                continue
+            if rep.ultimo_envio and rep.ultimo_envio.date() == datetime.utcnow().date():
+                continue
+            user = await db.get(User, rep.user_id)
+            if not user or user.subscription_plan == "free" or user.subscription_status != "active":
+                continue
+            kws = [k.strip() for k in rep.keywords.split(",") if k.strip()] if rep.keywords else []
+            q = select(Licitacion)
+            if rep.anio: q = q.where(Licitacion.anio == rep.anio)
+            if rep.mes: q = q.where(Licitacion.mes == rep.mes)
+            if kws:
+                from sqlalchemy import or_
+                q = q.where(or_(*[Licitacion.titulo.ilike(f"%{kw}%") for kw in kws]))
+            rows = (await db.execute(q.order_by(Licitacion.fecha_publicacion.desc()).limit(500))).scalars().all()
+            if not rows:
+                continue
+            recips = [r.strip() for r in (rep.recipients or user.email).replace(";", ",").split(",") if r.strip() and "@" in r]
+            if not recips:
+                continue
+            headers = ["NOG", "OCID", "Fecha", "Titulo", "Entidad", "Monto", "Moneda", "Estado", "Categoria", "Metodo", "Modalidad", "Departamento"]
+            def _ser(r):
+                return [r.nog, r.ocid, str(r.fecha_publicacion) if r.fecha_publicacion else "",
+                        r.titulo or "", r.entidad_compradora or "", r.monto or 0, r.moneda or "GTQ",
+                        r.estado or "", r.categoria or "", r.metodo or "", r.modalidad or "", r.departamento or ""]
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Licitaciones"
+            hfill = PatternFill("solid", fgColor="1A3A5C")
+            hfont = Font(color="FFFFFF", bold=True)
+            ws.append(headers)
+            for ci, _ in enumerate(headers, start=1):
+                c = ws.cell(row=1, column=ci)
+                c.fill = hfill; c.font = hfont; c.alignment = Alignment(horizontal="center")
+            for r in rows:
+                ws.append(_ser(r))
+            for ci, h in enumerate(headers, start=1):
+                col = get_column_letter(ci)
+                mx = max(len(str(h)), *(len(str(c.value or "")) for c in ws[col][1:min(len(ws[col]), 100)]))
+                ws.column_dimensions[col].width = min(mx + 2, 60)
+            ws.auto_filter.ref = ws.dimensions
+            ws.freeze_panes = "A2"
+            xbio = BytesIO(); wb.save(xbio); xbio.seek(0)
+            keyword_text = rep.keywords or "sin filtro"
+            html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
+                <h2 style="color:#1a3a5c">LiciTrackGT - Reporte programado</h2>
+                <p><b>{len(rows)} licitaciones</b> para: {keyword_text}</p>
+                <p style="margin:16px 0">Adjunto: <b>XLSX</b> con el detalle completo.</p>
+                <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
+                <p style="color:#888;font-size:12px">Reporte programado desde tu cuenta. Puedes desactivarlo en Alertas.</p></div>"""
+            from app.services.email_service import enviar_correo
+            try:
+                await enviar_correo(recips, f"LiciTrackGT: reporte programado - {keyword_text[:50]}",
+                                    html, (f"reporte_{rep.anio or 'todo'}_{rep.mes or 'todo'}.xlsx",
+                                           xbio.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                rep.ultimo_envio = datetime.utcnow()
+                await db.commit()
+            except Exception as e:
+                print(f"Error reporte programado id={rep.id}: {e}")
+
 async def background_auto_refresh():
     import asyncio
-    from datetime import datetime, timedelta
     global next_refresh_at, last_refresh_at
+    last_refresh_time = datetime.utcnow() - timedelta(hours=7)
     while True:
-        try:
-            await refresh_ultimo_mes()
-            last_refresh_at = datetime.utcnow()
-        except Exception as e:
-            print(f"Auto-refresh error: {e}")
+        ahora = datetime.utcnow()
+        if (ahora - last_refresh_time).total_seconds() >= 6 * 3600:
+            try:
+                await refresh_ultimo_mes()
+                last_refresh_at = datetime.utcnow()
+                last_refresh_time = last_refresh_at
+            except Exception as e:
+                print(f"Auto-refresh error: {e}")
+        next_refresh_at = last_refresh_time + timedelta(hours=6)
         try:
             await procesar_alertas()
         except Exception as e:
             print(f"Alertas error: {e}")
-        next_refresh_at = datetime.utcnow() + timedelta(hours=6)
-        await asyncio.sleep(6 * 3600)
+        try:
+            await procesar_scheduled_reports()
+        except Exception as e:
+            print(f"Scheduled reports error: {e}")
+        await asyncio.sleep(900)

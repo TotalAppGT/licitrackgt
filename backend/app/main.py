@@ -11,15 +11,16 @@ import httpx
 
 from app.config import settings
 from app.database import init_db, get_db
-from app.models import User, Licitacion, SubscriptionPlan, ExtractionLog, KeywordAlert
+from app.models import User, Licitacion, SubscriptionPlan, ExtractionLog, KeywordAlert, PipelineItem, ScheduledReport
 from app.auth import hash_password, verify_password, create_token, get_current_user
 
 RECURRENTE_API = "https://app.recurrente.com/api"
 RECURRENTE_PLANS = {
-    "basico":  {"price_id": "price_lltzdrus", "name": "B\u00e1sico",  "price": 349, "keywords": 10,  "users": 1},
-    "pro":     {"price_id": "price_kyqlcwp6", "name": "Pro",        "price": 599, "keywords": 50,  "users": 3},
-    "enterprise": {"price_id": "price_n2pdn7xh", "name": "Enterprise","price": 999, "keywords": 999, "users": 10},
+    "basico":  {"price_id": "price_lltzdrus", "name": "B\u00e1sico",  "price": 349, "keywords": 10,  "pipeline": 3,  "schedules": 1, "users": 1},
+    "pro":     {"price_id": "price_kyqlcwp6", "name": "Pro",        "price": 599, "keywords": 50,  "pipeline": 30, "schedules": 5, "users": 3},
+    "enterprise": {"price_id": "price_n2pdn7xh", "name": "Enterprise","price": 999, "keywords": 999, "pipeline": 999, "schedules": 999, "users": 10},
 }
+PIPELINE_ETAPAS = ["deteccion", "analisis", "preparacion", "presentacion", "adjudicacion", "ganada", "perdida"]
 
 app = FastAPI(title="LiciTrackGT API", docs_url="/docs")
 
@@ -364,12 +365,12 @@ async def recurrent_webhook(request: Request):
 @app.get("/api/payments/plans")
 async def get_plans():
     return {"plans": [
-        {"id": "free", "name": "Free", "price": 0, "keywords": 5, "users": 1},
-        {"id": "basico",  "name": "B\u00e1sico",  "price": 349, "keywords": 10,  "users": 1,
+        {"id": "free", "name": "Free", "price": 0, "keywords": 5, "pipeline": 0, "schedules": 0, "users": 1},
+        {"id": "basico",  "name": "B\u00e1sico",  "price": 349, "keywords": 10,  "pipeline": 3,  "schedules": 1, "users": 1,
          "stripe_price_id": RECURRENTE_PLANS["basico"]["price_id"]},
-        {"id": "pro",     "name": "Pro",        "price": 599, "keywords": 50,  "users": 3,
+        {"id": "pro",     "name": "Pro",        "price": 599, "keywords": 50,  "pipeline": 30, "schedules": 5, "users": 3,
          "stripe_price_id": RECURRENTE_PLANS["pro"]["price_id"]},
-        {"id": "enterprise", "name": "Enterprise","price": 999, "keywords": 999, "users": 10,
+        {"id": "enterprise", "name": "Enterprise","price": 999, "keywords": 999, "pipeline": 999, "schedules": 999, "users": 10,
          "stripe_price_id": RECURRENTE_PLANS["enterprise"]["price_id"]},
     ]}
 
@@ -418,7 +419,7 @@ class AlertRequest(BaseModel):
 async def mis_alertas(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(KeywordAlert).where(KeywordAlert.user_id == user.id).order_by(KeywordAlert.id))).scalars().all()
     limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("keywords", 5)
-    return {"alerts": [{"id": a.id, "keyword": a.keyword} for a in rows], "limite": limite}
+    return {"alerts": [{"id": a.id, "keyword": a.keyword, "hora_envio": a.hora_envio, "dias_envio": a.dias_envio} for a in rows], "limite": limite}
 
 @app.post("/api/alerts")
 async def crear_alerta(req: AlertRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -442,6 +443,153 @@ async def eliminar_alerta(alert_id: int, user: User = Depends(get_current_user),
     if not row or row.user_id != user.id:
         raise HTTPException(status_code=404, detail="Alerta no encontrada")
     await db.delete(row); await db.commit()
+    return {"ok": True}
+
+class UpdateAlertRequest(BaseModel):
+    hora_envio: Optional[int] = None
+    dias_envio: Optional[str] = None
+
+@app.patch("/api/alerts/{alert_id}")
+async def actualizar_alerta(alert_id: int, req: UpdateAlertRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    row = await db.get(KeywordAlert, alert_id)
+    if not row or row.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Alerta no encontrada")
+    if req.hora_envio is not None:
+        if req.hora_envio < 0 or req.hora_envio > 23:
+            raise HTTPException(status_code=400, detail="Hora debe ser 0-23")
+        row.hora_envio = req.hora_envio
+    if req.dias_envio is not None:
+        row.dias_envio = req.dias_envio
+    await db.commit()
+    return {"ok": True, "id": row.id, "keyword": row.keyword, "hora_envio": row.hora_envio, "dias_envio": row.dias_envio}
+
+class PipelineRequest(BaseModel):
+    nog: str
+    titulo: str = ""
+    entidad: str = ""
+    monto: float = 0
+    fecha_publicacion: Optional[str] = None
+
+@app.get("/api/pipeline")
+async def mi_pipeline(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(PipelineItem).where(PipelineItem.user_id == user.id).order_by(PipelineItem.updated_at.desc()))).scalars().all()
+    limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("pipeline", 0)
+    return {"items": [{"id": p.id, "nog": p.nog, "titulo": p.titulo, "entidad": p.entidad, "monto": p.monto,
+                        "fecha_publicacion": str(p.fecha_publicacion) if p.fecha_publicacion else "",
+                        "etapa": p.etapa, "fecha_presentacion": str(p.fecha_presentacion) if p.fecha_presentacion else "",
+                        "monto_propuesto": p.monto_propuesto or 0, "probabilidad": p.probabilidad or 0,
+                        "notas": p.notas or ""} for p in rows], "limite": limite}
+
+@app.post("/api/pipeline")
+async def agregar_pipeline(req: PipelineRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("pipeline", 0)
+    if limite <= 0:
+        raise HTTPException(status_code=403, detail="Pipeline disponible en plan Basico o superior")
+    count = await db.scalar(select(func.count()).select_from(PipelineItem).where(PipelineItem.user_id == user.id))
+    if count >= limite:
+        raise HTTPException(status_code=400, detail=f"Limite de {limite} items alcanzado para tu plan")
+    exist = await db.scalar(select(PipelineItem).where(PipelineItem.user_id == user.id, PipelineItem.nog == req.nog))
+    if exist:
+        raise HTTPException(status_code=400, detail="Este NOG ya esta en tu pipeline")
+    fp = None
+    if req.fecha_publicacion:
+        try: fp = date.fromisoformat(req.fecha_publicacion)
+        except: fp = None
+    p = PipelineItem(user_id=user.id, nog=req.nog, titulo=req.titulo, entidad=req.entidad,
+                     monto=req.monto, fecha_publicacion=fp, etapa="deteccion")
+    db.add(p); await db.commit(); await db.refresh(p)
+    return {"id": p.id, "nog": p.nog, "etapa": p.etapa}
+
+class UpdatePipelineRequest(BaseModel):
+    etapa: Optional[str] = None
+    fecha_presentacion: Optional[str] = None
+    monto_propuesto: Optional[float] = None
+    probabilidad: Optional[int] = None
+    notas: Optional[str] = None
+
+@app.patch("/api/pipeline/{item_id}")
+async def actualizar_pipeline(item_id: int, req: UpdatePipelineRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    p = await db.get(PipelineItem, item_id)
+    if not p or p.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+    if req.etapa and req.etapa not in PIPELINE_ETAPAS:
+        raise HTTPException(status_code=400, detail=f"Etapa invalida. Usa: {', '.join(PIPELINE_ETAPAS)}")
+    if req.etapa: p.etapa = req.etapa
+    if req.fecha_presentacion is not None:
+        try: p.fecha_presentacion = date.fromisoformat(req.fecha_presentacion) if req.fecha_presentacion else None
+        except: pass
+    if req.monto_propuesto is not None: p.monto_propuesto = req.monto_propuesto
+    if req.probabilidad is not None: p.probabilidad = max(0, min(100, req.probabilidad))
+    if req.notas is not None: p.notas = req.notas
+    from datetime import datetime
+    p.updated_at = datetime.utcnow()
+    await db.commit()
+    return {"ok": True, "id": p.id, "etapa": p.etapa}
+
+@app.delete("/api/pipeline/{item_id}")
+async def eliminar_pipeline(item_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    p = await db.get(PipelineItem, item_id)
+    if not p or p.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+    await db.delete(p); await db.commit()
+    return {"ok": True}
+
+@app.get("/api/pipeline/deadlines")
+async def pipeline_deadlines(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(
+        select(PipelineItem).where(PipelineItem.user_id == user.id, PipelineItem.fecha_presentacion != None)
+        .order_by(PipelineItem.fecha_presentacion).limit(10)
+    )).scalars().all()
+    hoy = date.today()
+    return {"deadlines": [{"nog": p.nog, "titulo": p.titulo, "etapa": p.etapa,
+                            "fecha_presentacion": str(p.fecha_presentacion),
+                            "dias_faltan": (p.fecha_presentacion - hoy).days} for p in rows if p.fecha_presentacion and p.fecha_presentacion >= hoy]}
+
+class ScheduleRequest(BaseModel):
+    hora: int = 8
+    dias: str = "1,2,3,4,5"
+    recipients: str = ""
+    keywords: str = ""
+    anio: Optional[int] = None
+    mes: Optional[int] = None
+
+@app.get("/api/scheduled-reports")
+async def mis_reportes(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(ScheduledReport).where(ScheduledReport.user_id == user.id).order_by(ScheduledReport.id))).scalars().all()
+    limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("schedules", 0)
+    return {"items": [{"id": r.id, "hora": r.hora, "dias": r.dias, "enabled": r.enabled,
+                        "recipients": r.recipients, "keywords": r.keywords,
+                        "anio": r.anio, "mes": r.mes,
+                        "ultimo_envio": str(r.ultimo_envio)[:19] if r.ultimo_envio else None} for r in rows], "limite": limite}
+
+@app.post("/api/scheduled-reports")
+async def crear_reporte(req: ScheduleRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    limite = RECURRENTE_PLANS.get(user.subscription_plan, {}).get("schedules", 0)
+    if limite <= 0:
+        raise HTTPException(status_code=403, detail="Reportes programados disponibles en plan Basico o superior")
+    count = await db.scalar(select(func.count()).select_from(ScheduledReport).where(ScheduledReport.user_id == user.id))
+    if count >= limite:
+        raise HTTPException(status_code=400, detail=f"Limite de {limite} reportes alcanzado para tu plan")
+    r = ScheduledReport(user_id=user.id, hora=req.hora, dias=req.dias, recipients=req.recipients.strip(),
+                        keywords=req.keywords.strip(), anio=req.anio, mes=req.mes)
+    db.add(r); await db.commit(); await db.refresh(r)
+    return {"id": r.id, "hora": r.hora}
+
+@app.patch("/api/scheduled-reports/{report_id}")
+async def toggle_reporte(report_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    r = await db.get(ScheduledReport, report_id)
+    if not r or r.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    r.enabled = not r.enabled
+    await db.commit()
+    return {"id": r.id, "enabled": r.enabled}
+
+@app.delete("/api/scheduled-reports/{report_id}")
+async def eliminar_reporte(report_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    r = await db.get(ScheduledReport, report_id)
+    if not r or r.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    await db.delete(r); await db.commit()
     return {"ok": True}
 
 class EnviarCorreoRequest(BaseModel):
