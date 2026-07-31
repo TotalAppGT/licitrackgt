@@ -165,8 +165,8 @@ async def procesar_alertas():
                     ) + f"\n\nVer mas: {settings.FRONTEND_URL}"
                     try:
                         await enviar_whatsapp(u.whatsapp_phone, wa_text)
-                except Exception as e:
-                    print(f"Error WhatsApp para {u.email}: {e}")
+                    except Exception as e:
+                        print(f"Error WhatsApp para {u.email}: {e}")
         for a in alerts_to_update:
             a.ultimo_envio = datetime.utcnow()
         await db.commit()
