@@ -118,6 +118,7 @@ class FiltrosQuery(BaseModel):
     fecha_hasta: Optional[str] = None
     monto_min: Optional[float] = None
     monto_max: Optional[float] = None
+    destinatario: Optional[str] = None
     page: int = 1
     per_page: int = 50
 
