@@ -497,9 +497,9 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
     xlsx_bytes = xbio.getvalue()
 
     fila = "".join(
-        f'<tr><td>{m["nog"]}</td><td>{m["fecha"]}</td><td><a href="https://guatecompras.gt/procesos/{m["nog"]}" style="color:#1a5fb4">{m["titulo"]}</a></td>'
-        f'<td style="text-align:right">Q{float(m["monto"]):,.0f}</td><td>{m["entidad"]}</td></tr>'
-        for m in rows[:80])
+        f'<tr><td>{r.nog}</td><td>{r.fecha_publicacion}</td><td><a href="https://guatecompras.gt/procesos/{r.nog}" style="color:#1a5fb4">{r.titulo}</a></td>'
+        f'<td style="text-align:right">Q{float(r.monto or 0):,.0f}</td><td>{r.entidad_compradora}</td></tr>'
+        for r in rows[:80])
     html = f"""<div style="font-family:Arial;max-width:700px;margin:auto;color:#222">
         <h2 style="color:#1a3a5c">LiciTrackGT - {len(rows)} licitaciones</h2>
         <p>Filtro: <b>{titulo_filtro}</b></p>
