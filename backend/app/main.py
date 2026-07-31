@@ -438,6 +438,22 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
 # ============================================================
 # STARTUP
 # ============================================================
+@app.get("/api/debug/network", include_in_schema=False)
+async def debug_network(user: User = Depends(get_current_user)):
+    import socket
+    result = {"smtp_host": settings.SMTP_HOST, "smtp_port": settings.SMTP_PORT,
+              "smtp_user_configured": bool(settings.SMTP_USER)}
+    for host, port in [("smtp.gmail.com", 587), ("smtp.gmail.com", 465), ("ocds.guatecompras.gt", 443)]:
+        try:
+            infos = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            result[f"{host}:{port}_dns"] = [i[4][0] for i in infos]
+            s = socket.create_connection((host, port), timeout=8)
+            s.close()
+            result[f"{host}:{port}_connect"] = "OK"
+        except Exception as e:
+            result[f"{host}:{port}_connect"] = f"{type(e).__name__}: {e}"
+    return result
+
 @app.on_event("startup")
 async def startup():
     await init_db()
