@@ -90,7 +90,8 @@ function AppContent() {
           </button>
           <span className="opacity-80">{user.email}</span>
           {user.is_admin && <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs font-bold">ADMIN</span>}
-          <span className="text-xs bg-sky-500/30 px-2 py-0.5 rounded font-mono whitespace-nowrap">
+          <span className="bg-green-500 px-2 py-0.5 rounded text-xs">{user.plan}</span>
+          <span className="text-xs text-white/60 font-mono tabular-nums">
             {useCountdownDisplay()}
           </span>
           <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">Salir</button>
