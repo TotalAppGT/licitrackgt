@@ -452,6 +452,12 @@ async def debug_network(user: User = Depends(get_current_user)):
             result[f"{host}:{port}_connect"] = "OK"
         except Exception as e:
             result[f"{host}:{port}_connect"] = f"{type(e).__name__}: {e}"
+    try:
+        s = socket.create_connection(("142.250.141.108", 587), timeout=8)
+        s.close()
+        result["smtp_ipv4_connect"] = "OK"
+    except Exception as e:
+        result["smtp_ipv4_connect"] = f"{type(e).__name__}: {e}"
     return result
 
 @app.on_event("startup")
