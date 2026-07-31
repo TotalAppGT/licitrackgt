@@ -11,6 +11,31 @@ import AdminPanel from './pages/AdminPanel'
 import Onboarding from './pages/Onboarding'
 import Equipo from './pages/Equipo'
 
+function useCountdownDisplay() {
+  const [next, setNext] = useState<number | null>(null)
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    let alive = true
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/extraction/status', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+        const data = await r.json()
+        if (alive && data.next_refresh_at) setNext(new Date(data.next_refresh_at).getTime())
+      } catch {}
+    }
+    tick()
+    const id = setInterval(tick, 120000)
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => { alive = false; clearInterval(id); clearInterval(t) }
+  }, [])
+  if (!next) return ''
+  const ms = Math.max(0, next - now)
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  const s = Math.floor((ms % 60000) / 1000)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 function AppContent() {
   const { user, logout, loading } = useAuth()
   const [tab, setTab] = useState('dashboard')
@@ -65,18 +90,20 @@ function AppContent() {
           </button>
           <span className="opacity-80">{user.email}</span>
           {user.is_admin && <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs font-bold">ADMIN</span>}
-          <span className="bg-green-500 px-2 py-0.5 rounded text-xs">{user.plan}</span>
+          <span className="text-xs bg-sky-500/30 px-2 py-0.5 rounded font-mono whitespace-nowrap">
+            {useCountdownDisplay()}
+          </span>
           <button onClick={logout} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition">Salir</button>
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {tab === 'dashboard' && <Dashboard />}
-        {tab === 'filtros' && <FiltrosResultados />}
-        {tab === 'pipeline' && <Pipeline />}
-        {tab === 'alertas' && <Alertas />}
-        {tab === 'suscripcion' && <Suscripcion />}
-        {tab === 'admin' && <AdminPanel />}
-        {tab === 'equipo' && <Equipo />}
+        <div className={tab === 'dashboard' ? '' : 'hidden'}><Dashboard /></div>
+        <div className={tab === 'filtros' ? '' : 'hidden'}><FiltrosResultados /></div>
+        <div className={tab === 'pipeline' ? '' : 'hidden'}><Pipeline /></div>
+        <div className={tab === 'alertas' ? '' : 'hidden'}><Alertas /></div>
+        <div className={tab === 'suscripcion' ? '' : 'hidden'}><Suscripcion /></div>
+        {user.is_admin && <div className={tab === 'admin' ? '' : 'hidden'}><AdminPanel /></div>}
+        {user.plan !== 'free' && <div className={tab === 'equipo' ? '' : 'hidden'}><Equipo /></div>}
       </main>
 
       {showProfile && (

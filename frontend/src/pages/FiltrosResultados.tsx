@@ -5,29 +5,6 @@ import { toast } from '../components/Toast'
 const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
-function useCountdown() {
-  const [next, setNext] = useState<number | null>(null)
-  const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    let alive = true
-    const tick = async () => {
-      try {
-        const s = await api.extraccionStatus()
-        if (alive) setNext(s.next_refresh_at ? new Date(s.next_refresh_at).getTime() : null)
-      } catch { /* ignore */ }
-    }
-    tick()
-    const id = setInterval(tick, 60000)
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => { alive = false; clearInterval(id); clearInterval(t) }
-  }, [])
-  const ms = next ? Math.max(0, next - now) : 0
-  const h = Math.floor(ms / 3600000)
-  const m = Math.floor((ms % 3600000) / 60000)
-  const s = Math.floor((ms % 60000) / 1000)
-  return { h, m, s, hasNext: next != null }
-}
-
 export default function FiltrosResultados() {
   const [filters, setFilters] = useState<any>({})
   const [results, setResults] = useState<any>(null)
@@ -39,7 +16,6 @@ export default function FiltrosResultados() {
   const [sending, setSending] = useState(false)
   const [destinatario, setDestinatario] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const { h, m, s, hasNext } = useCountdown()
 
   useEffect(() => {
     api.opciones().then(setOpciones)
@@ -122,19 +98,6 @@ export default function FiltrosResultados() {
       <div className="lg:col-span-1">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 sticky top-20 overflow-y-auto max-h-[calc(100vh-120px)]">
           <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">Filtros</h4>
-          <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3 flex items-center gap-2">
-            {hasNext ? (
-              <>
-                <span className="text-xs text-blue-800 font-medium">Próxima actualización:</span>
-                <span className="font-mono text-sm text-blue-700 tabular-nums">
-                  {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
-                </span>
-                <span className="ml-auto text-blue-400 text-xs">cada 6h</span>
-              </>
-            ) : (
-              <span className="text-xs text-blue-800">Calculando próxima actualización...</span>
-            )}
-          </div>
           <div className="space-y-3">
             <div>
               <label className="text-xs text-gray-500">Periodo (anio/mes)</label>
