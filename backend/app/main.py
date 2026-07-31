@@ -181,25 +181,25 @@ async def export_licitaciones(f: FiltrosQuery, user: User = Depends(get_current_
     q = _apply_filtros(select(Licitacion), f)
     base = q.order_by(Licitacion.id)
 
-    def rows_batches(batch=2000):
+    async def rows_batches(batch=2000):
         last_id = 0
         while True:
             sub = base.where(Licitacion.id > last_id).limit(batch)
-            batch_rows = (db.execute(sub)).scalars().all()
+            batch_rows = (await db.execute(sub)).scalars().all()
             if not batch_rows:
                 break
             for r in batch_rows:
                 yield r
             last_id = batch_rows[-1].id
 
-    def stream_csv():
+    async def stream_csv():
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow(CSV_HEADERS)
         yield buf.getvalue()
         buf = io.StringIO()
         writer = csv.writer(buf)
-        for r in rows_batches():
+        async for r in rows_batches():
             writer.writerow(_serialize(r))
             if buf.tell() > 1024 * 512:
                 yield buf.getvalue()
