@@ -46,6 +46,8 @@ function AppContent() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<any>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [currentPass, setCurrentPass] = useState('')
+  const [newPass, setNewPass] = useState('')
 
   useEffect(() => {
     if (user && !localStorage.getItem('onboarding_done')) {
@@ -176,6 +178,31 @@ function AppContent() {
                   className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
                   Guardar
                 </button>
+              </div>
+              <hr className="my-4" />
+              <p className="text-xs font-semibold text-gray-600 mb-2">Cambiar contraseña</p>
+              <div className="space-y-2">
+                <input type="password" value={currentPass} placeholder="Contraseña actual"
+                  onChange={e => setCurrentPass(e.target.value)}
+                  className="w-full text-xs border rounded-lg p-2" />
+                <input type="password" value={newPass} placeholder="Nueva contraseña"
+                  onChange={e => setNewPass(e.target.value)}
+                  className="w-full text-xs border rounded-lg p-2" />
+                <button onClick={async () => {
+                  if (!currentPass || !newPass) { toast.show('Llena ambos campos', 'warning'); return }
+                  try {
+                    const token = localStorage.getItem('token')
+                    const res = await fetch('/api/auth/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ current_password: currentPass, new_password: newPass }),
+                    })
+                    if (!res.ok) { const e = await res.json(); throw new Error(e.detail) }
+                    setCurrentPass(''); setNewPass('')
+                    toast.show('Contraseña actualizada', 'success')
+                  } catch (e: any) { toast.show(e.message, 'error') }
+                }}
+                  className="text-xs px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200">Actualizar contraseña</button>
               </div>
             </div>
           </div>

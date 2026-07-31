@@ -78,7 +78,8 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     token = create_token({"sub": user.email})
     return TokenResponse(access_token=token, user={
         "id": user.id, "email": user.email, "name": user.name,
-        "is_admin": user.is_admin, "plan": user.subscription_plan
+        "is_admin": user.is_admin, "plan": user.subscription_plan,
+        "is_team_member": user.main_user_id is not None
     })
 
 @app.post("/api/auth/register")
@@ -105,13 +106,19 @@ async def me(user: User = Depends(get_current_user)):
 class UpdateProfileRequest(BaseModel):
     name: Optional[str] = None
     whatsapp_phone: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
 
 @app.put("/api/auth/profile")
 async def update_profile(req: UpdateProfileRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     if req.name is not None: user.name = req.name
     if req.whatsapp_phone is not None: user.whatsapp_phone = req.whatsapp_phone.strip() or None
+    if req.new_password:
+        if not req.current_password or not verify_password(req.current_password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+        user.password_hash = hash_password(req.new_password)
     await db.commit()
-    return {"ok": True, "whatsapp_phone": user.whatsapp_phone or ""}
+    return {"ok": True, "whatsapp_phone": user.whatsapp_phone or "", "password_changed": bool(req.new_password)}
 
 class TestNotificationRequest(BaseModel):
     whatsapp_phone: Optional[str] = None
