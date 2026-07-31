@@ -96,6 +96,48 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         "id": user.id, "email": user.email, "name": user.name, "plan": "free"
     })
 
+class FirebaseAuthRequest(BaseModel):
+    firebase_token: str
+    name: str = ""
+
+@app.post("/api/auth/firebase")
+async def firebase_auth(req: FirebaseAuthRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15) as cl:
+            resp = await cl.get(
+                "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
+                params={"key": "AIzaSyBtdzASSqHz2oirxJGl6deGkfIUBMUnO_c"},
+                json={"idToken": req.firebase_token},
+            )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=401, detail="Token Firebase invalido")
+        data = resp.json()
+        users = data.get("users", [])
+        if not users:
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
+        fb_user = users[0]
+        email = fb_user.get("email", "")
+        if not email:
+            email = fb_user.get("providerUserInfo", [{}])[0].get("email", "")
+        name = req.name or fb_user.get("displayName", "") or email.split("@")[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Error verificando Firebase: {str(e)[:100]}")
+    
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(email=email, password_hash=hash_password("firebase-no-password"), name=name)
+        db.add(user); await db.commit(); await db.refresh(user)
+    token = create_token({"sub": user.email})
+    return TokenResponse(access_token=token, user={
+        "id": user.id, "email": user.email, "name": user.name,
+        "is_admin": user.is_admin, "plan": user.subscription_plan,
+        "is_team_member": user.main_user_id is not None
+    })
+
 @app.get("/api/auth/me")
 async def me(user: User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email, "name": user.name,
