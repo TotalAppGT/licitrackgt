@@ -22,6 +22,24 @@ RECURRENTE_PLANS = {
 }
 PIPELINE_ETAPAS = ["deteccion", "analisis", "preparacion", "presentacion", "adjudicacion", "ganada", "perdida"]
 
+def _send_invite_email(to_email: str, name: str, owner_email: str, temp_password: str | None):
+    import asyncio
+    async def _do():
+        try:
+            from app.services.email_service import enviar_correo
+            html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
+                <h2 style="color:#1a3a5c">Bienvenido a LiciTrackGT</h2>
+                <p>Hola {name or 'usuario'},</p>
+                <p>{owner_email} te ha invitado a colaborar en <b>LiciTrackGT</b>.</p>
+                {f'<p>Tu contraseña temporal: <b style="font-size:18px;background:#f0f0f0;padding:4px 8px;border-radius:4px">{temp_password}</b></p>' if temp_password else '<p>Ya tienes una cuenta. Tu acceso ha sido actualizado.</p>'}
+                <p>Ingresa en: <a href="{settings.FRONTEND_URL}">{settings.FRONTEND_URL}</a></p>
+                <p style="margin-top:16px">Desde aqui podras buscar licitaciones, configurar alertas y dar seguimiento a tus oportunidades.</p>
+                <p style="color:#888;font-size:12px">LiciTrackGT - Monitoreo inteligente de Guatecompras</p></div>"""
+            await enviar_correo([to_email], "Has sido invitado a LiciTrackGT", html)
+        except Exception as e:
+            print(f"Error enviando invitacion a {to_email}: {e}")
+    asyncio.create_task(_do())
+
 app = FastAPI(title="LiciTrackGT API", docs_url="/docs")
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -707,7 +725,11 @@ async def invitar_miembro(req: InviteRequest, user: User = Depends(get_current_u
         if existing.main_user_id:
             raise HTTPException(status_code=400, detail="Usuario ya pertenece a otro equipo")
         existing.main_user_id = owner_id
+        existing.subscription_plan = owner.subscription_plan
+        existing.subscription_status = "active"
+        existing.keywords_limit = owner.keywords_limit
         await db.commit()
+        _send_invite_email(req.email, req.name, owner.email, None)
         return {"id": existing.id, "email": existing.email}
     import secrets
     temp_pass = secrets.token_urlsafe(8)
@@ -715,6 +737,7 @@ async def invitar_miembro(req: InviteRequest, user: User = Depends(get_current_u
                     main_user_id=owner_id, subscription_plan=owner.subscription_plan,
                     subscription_status="active", keywords_limit=owner.keywords_limit)
     db.add(new_user); await db.commit(); await db.refresh(new_user)
+    _send_invite_email(req.email, req.name, owner.email, temp_pass)
     return {"id": new_user.id, "email": new_user.email, "temp_password": temp_pass}
 
 @app.delete("/api/team/members/{member_id}")
