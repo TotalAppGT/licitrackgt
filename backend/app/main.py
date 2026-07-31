@@ -337,23 +337,12 @@ async def get_plans():
     ]}
 
 # ============================================================
-# STATIC FILES (Frontend SPA en produccion)
+# STATIC FILES (Frontend SPA en produccion) - catch-all al FINAL
 # ============================================================
 STATIC_DIR = Path(__file__).parent.parent / "static"
 if STATIC_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="assets")
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR / "static"), check_dir=False), name="static")
-
-    @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_spa(full_path: str):
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
-            from fastapi.responses import JSONResponse
-            return JSONResponse({"detail": "Not Found"}, status_code=404)
-        from fastapi.responses import FileResponse
-        index = STATIC_DIR / "index.html"
-        if not index.exists():
-            return JSONResponse({"detail": "Frontend no construido"}, status_code=500)
-        return FileResponse(str(index))
 
 # ============================================================
 # EXTRACTION
@@ -470,3 +459,18 @@ if __name__ == "__main__":
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from app.database import async_session
+
+# ============================================================
+# SPA CATCH-ALL (debe ir despues de todas las rutas API)
+# ============================================================
+if STATIC_DIR.exists():
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        from fastapi.responses import FileResponse
+        index = STATIC_DIR / "index.html"
+        if not index.exists():
+            return JSONResponse({"detail": "Frontend no construido"}, status_code=500)
+        return FileResponse(str(index))
