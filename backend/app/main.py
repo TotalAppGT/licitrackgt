@@ -546,6 +546,47 @@ async def eliminar_alerta(alert_id: int, user: User = Depends(get_current_user),
     await db.delete(row); await db.commit()
     return {"ok": True}
 
+@app.post("/api/alerts/{alert_id}/test")
+async def test_alerta(alert_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    alert = await db.get(KeywordAlert, alert_id)
+    if not alert or alert.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Alerta no encontrada")
+    ahora = datetime.utcnow()
+    rows = (await db.execute(
+        select(Licitacion).where(
+            Licitacion.titulo.ilike(f"%{alert.keyword}%"),
+            Licitacion.anio == ahora.year, Licitacion.mes == ahora.month,
+        ).limit(10)
+    )).scalars().all()
+    if not rows:
+        raise HTTPException(status_code=400, detail="No se encontraron coincidencias para esta palabra clave este mes")
+    lista = "".join(
+        f'<li><a href="https://guatecompras.gt/procesos/{r.nog}" style="color:#1a5fb4">{r.titulo}</a> - Q{float(r.monto or 0):,.0f}</li>'
+        for r in rows[:10])
+    html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
+        <h2 style="color:#1a3a5c">LiciTrackGT - Prueba de alerta</h2>
+        <p>Palabra clave: <b>{alert.keyword}</b></p>
+        <p>Coincidencias encontradas este mes: <b>{len(rows)}</b></p>
+        <ul style="font-size:13px;line-height:1.6">{lista}</ul>
+        <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
+    </div>"""
+    from app.services.email_service import enviar_correo
+    from app.services.whatsapp_service import enviar_whatsapp
+    result = {"email": False, "whatsapp": False, "registros": len(rows)}
+    try:
+        await enviar_correo([user.email], f"LiciTrackGT - Prueba: {alert.keyword}", html)
+        result["email"] = True
+    except Exception as e:
+        result["error"] = str(e)[:100]
+    if user.whatsapp_phone:
+        try:
+            wa_text = f"LiciTrackGT - Prueba\n\n{alert.keyword}: {len(rows)} coincidencias\n" + "\n".join(f"  {r.titulo[:60]}" for r in rows[:5])
+            ok = await enviar_whatsapp(user.whatsapp_phone, wa_text)
+            result["whatsapp"] = ok
+        except Exception as e:
+            result["error"] = str(e)[:100]
+    return result
+
 class UpdateAlertRequest(BaseModel):
     hora_envio: Optional[int] = None
     dias_envio: Optional[str] = None
