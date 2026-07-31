@@ -21,7 +21,7 @@ RECURRENTE_PLANS = {
     "enterprise": {"price_id": "price_n2pdn7xh", "name": "Enterprise","price": 999, "keywords": 999, "users": 10},
 }
 
-app = FastAPI(title="NoniNOG API", docs_url="/docs")
+app = FastAPI(title="LiciTrackGT API", docs_url="/docs")
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -276,7 +276,7 @@ async def startup():
                          subscription_status="active", keywords_limit=999)
             db.add(admin); await db.commit()
             print("Admin creado: totalappgt@gmail.com / admintotal")
-    print("NoniNOG API iniciada")
+    print("LiciTrackGT API iniciada")
 
 if __name__ == "__main__":
     import uvicorn

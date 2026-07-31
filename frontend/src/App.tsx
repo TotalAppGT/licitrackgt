@@ -22,7 +22,7 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-[#1a3a5c] text-white px-6 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-8">
-          <h1 className="text-xl font-extrabold tracking-wider">NoniNOG</h1>
+          <h1 className="text-xl font-extrabold tracking-wider">LiciTrackGT</h1>
           <div className="flex gap-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}

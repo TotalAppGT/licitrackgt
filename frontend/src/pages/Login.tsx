@@ -19,7 +19,7 @@ export default function Login() {
     <div className="min-h-screen bg-[#1a3a5c] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-[#1a3a5c]">NoniNOG</h1>
+          <h1 className="text-3xl font-extrabold text-[#1a3a5c]">LiciTrackGT</h1>
           <p className="text-gray-500 mt-1">Inteligencia para Guatecompras</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
