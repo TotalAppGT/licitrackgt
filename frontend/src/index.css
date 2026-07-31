@@ -1,2 +1,9 @@
 @tailwind base; @tailwind components; @tailwind utilities;
 body { font-family: 'Inter', system-ui, sans-serif; background: #f0f2f5; margin: 0; }
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from '../components/Toast'
 
 export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0)
@@ -34,7 +35,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
         body: JSON.stringify({ whatsapp_phone: waPhone }),
       })
       onComplete()
-    } catch (e: any) { alert('Error al guardar') }
+    } catch (e: any) { toast.show('Error al guardar', 'error') }
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
+import { toast } from '../components/Toast'
 
 const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -53,23 +54,23 @@ export default function FiltrosResultados() {
   const download = async (tipo: 'csv' | 'xlsx') => {
     setExporting(tipo)
     try { await (tipo === 'csv' ? api.exportCsv(filters) : api.exportXlsx(filters)) }
-    catch (e: any) { alert(e.message) }
+    catch (e: any) { toast.show(e.message, 'error') }
     finally { setExporting(null) }
   }
 
   const addToPipeline = async (row: any) => {
     try {
       await api.addPipeline({ nog: row.nog, titulo: row.titulo || '', entidad: row.entidad || '', monto: row.monto || 0, fecha: row.fecha || '' })
-      alert('Agregado al pipeline')
-    } catch (e: any) { alert(e.message) }
+      toast.show('Agregado al pipeline', 'success')
+    } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const sendEmail = async () => {
     setSending(true)
     try {
       const res = await api.enviarResultados(filters, destinatario)
-      alert(`Correo enviado a ${res.enviado_a} con ${res.registros} registros`)
-    } catch (e: any) { alert(e.message) }
+      toast.show(`Correo enviado a ${res.enviado_a} con ${res.registros} registros`, 'success')
+    } catch (e: any) { toast.show(e.message, 'error') }
     finally { setSending(false) }
   }
 

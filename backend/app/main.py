@@ -678,6 +678,55 @@ async def eliminar_reporte(report_id: int, user: User = Depends(get_current_user
     await db.delete(r); await db.commit()
     return {"ok": True}
 
+class InviteRequest(BaseModel):
+    email: str
+    name: str = ""
+
+@app.get("/api/team/members")
+async def miembros_equipo(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    owner_id = user.main_user_id or user.id
+    owner = await db.get(User, owner_id)
+    max_users = RECURRENTE_PLANS.get(owner.subscription_plan, {}).get("users", 1)
+    members = (await db.execute(select(User).where(
+        (User.id == owner_id) | (User.main_user_id == owner_id)
+    ))).scalars().all()
+    return {"members": [{"id": m.id, "email": m.email, "name": m.name, "plan": m.subscription_plan} for m in members], "max_users": max_users, "owner_id": owner_id}
+
+@app.post("/api/team/invite")
+async def invitar_miembro(req: InviteRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    owner_id = user.main_user_id or user.id
+    owner = await db.get(User, owner_id)
+    max_users = RECURRENTE_PLANS.get(owner.subscription_plan, {}).get("users", 1)
+    current = await db.scalar(select(func.count()).select_from(User).where(
+        (User.id == owner_id) | (User.main_user_id == owner_id)
+    ))
+    if current >= max_users:
+        raise HTTPException(status_code=400, detail=f"Limite de {max_users} usuarios alcanzado")
+    existing = await db.scalar(select(User).where(User.email == req.email))
+    if existing:
+        if existing.main_user_id:
+            raise HTTPException(status_code=400, detail="Usuario ya pertenece a otro equipo")
+        existing.main_user_id = owner_id
+        await db.commit()
+        return {"id": existing.id, "email": existing.email}
+    import secrets
+    temp_pass = secrets.token_urlsafe(8)
+    new_user = User(email=req.email, name=req.name, password_hash=hash_password(temp_pass),
+                    main_user_id=owner_id, subscription_plan=owner.subscription_plan,
+                    subscription_status="active", keywords_limit=owner.keywords_limit)
+    db.add(new_user); await db.commit(); await db.refresh(new_user)
+    return {"id": new_user.id, "email": new_user.email, "temp_password": temp_pass}
+
+@app.delete("/api/team/members/{member_id}")
+async def eliminar_miembro(member_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    owner_id = user.main_user_id or user.id
+    member = await db.get(User, member_id)
+    if not member or member.main_user_id != owner_id:
+        raise HTTPException(status_code=404, detail="Miembro no encontrado")
+    member.main_user_id = None
+    await db.commit()
+    return {"ok": True}
+
 class EnviarCorreoRequest(BaseModel):
     destinatario: str = ""
     asunto: Optional[str] = None
@@ -861,6 +910,10 @@ async def startup():
         except Exception: pass
         try:
             await db.execute(text("ALTER TABLE keyword_alerts ADD COLUMN IF NOT EXISTS frecuencia VARCHAR(20) DEFAULT 'diario'"))
+            await db.commit()
+        except Exception: pass
+        try:
+            await db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS main_user_id INTEGER REFERENCES users(id)"))
             await db.commit()
         except Exception: pass
         result = await db.execute(select(User).where(User.email == "totalappgt@gmail.com"))

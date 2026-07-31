@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { toast } from '../components/Toast'
 
 const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 const HORAS = Array.from({ length: 24 }, (_, i) => i)
@@ -23,12 +24,12 @@ export default function Alertas() {
     if (!keyword.trim()) return
     setLoading(true)
     try { await api.crearAlerta(keyword.trim()); setKeyword(''); cargar() }
-    catch (e: any) { alert(e.message) }
+    catch (e: any) { toast.show(e.message, 'error') }
     finally { setLoading(false) }
   }
 
   const eliminar = async (id: number) => {
-    try { await api.eliminarAlerta(id); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.eliminarAlerta(id); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const abrirEditar = (a: any) => {
@@ -37,7 +38,7 @@ export default function Alertas() {
 
   const guardarSchedule = async (id: number) => {
     try { await api.actualizarAlerta(id, editHora, editDias, editFrec); setEditing(null); cargar() }
-    catch (e: any) { alert(e.message) }
+    catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const toggleDia = (dia: string) => {
@@ -184,15 +185,15 @@ function ReportesProgramados() {
   useEffect(cargar, [])
 
   const crear = async () => {
-    try { await api.createScheduledReport(form); setShowForm(false); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.createScheduledReport(form); setShowForm(false); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const toggle = async (id: number) => {
-    try { await api.toggleScheduledReport(id); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.toggleScheduledReport(id); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const eliminar = async (id: number) => {
-    try { await api.deleteScheduledReport(id); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.deleteScheduledReport(id); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   if (limite <= 0) return <p className="text-xs text-gray-400 text-center py-4">No disponible en tu plan actual.</p>

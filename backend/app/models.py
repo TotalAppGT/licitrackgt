@@ -17,6 +17,7 @@ class User(Base):
     subscription_status = Column(String(50), default="inactive")
     keywords_limit = Column(Integer, default=5)
     whatsapp_phone = Column(String(30))
+    main_user_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Licitacion(Base):

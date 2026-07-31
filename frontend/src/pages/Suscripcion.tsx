@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
+import { toast } from '../components/Toast'
 
 const PLANES = [
   {
@@ -92,12 +93,12 @@ export default function Suscripcion() {
   const [loading, setLoading] = useState(false)
 
   const handleSubscribe = async (priceId: string | undefined) => {
-    if (!priceId) { alert('Configurar antes en backend'); return }
+    if (!priceId) { toast.show('Configurar antes en backend', 'warning'); return }
     setLoading(true)
     try {
       const res = await api.createCheckout(priceId)
       window.location.href = res.url
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.show(e.message, 'error') }
     finally { setLoading(false) }
   }
 

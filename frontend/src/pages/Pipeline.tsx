@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { toast } from '../components/Toast'
 
 const ETAPAS = ['deteccion', 'analisis', 'preparacion', 'presentacion', 'adjudicacion', 'ganada', 'perdida']
 const ETAPA_COLOR: Record<string, string> = {
@@ -36,21 +37,21 @@ export default function Pipeline() {
     if (!form.nog.trim()) return
     setLoading(true)
     try { await api.addPipeline({ nog: form.nog.trim(), titulo: form.titulo, entidad: form.entidad, monto: form.monto, fecha: form.fecha }); setShowAdd(false); setForm({ nog: '', titulo: '', entidad: '', monto: 0, fecha: '' }); cargar() }
-    catch (e: any) { alert(e.message) }
+    catch (e: any) { toast.show(e.message, 'error') }
     finally { setLoading(false) }
   }
 
   const cambiarEtapa = async (id: number, etapa: string) => {
-    try { await api.updatePipeline(id, { etapa }); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.updatePipeline(id, { etapa }); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const actualizar = async (id: number, data: any) => {
-    try { await api.updatePipeline(id, data); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.updatePipeline(id, data); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   const eliminar = async (id: number) => {
     if (!confirm('Eliminar esta licitacion del pipeline?')) return
-    try { await api.deletePipeline(id); cargar() } catch (e: any) { alert(e.message) }
+    try { await api.deletePipeline(id); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ToastProvider, toast } from './components/Toast'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import FiltrosResultados from './pages/FiltrosResultados'
@@ -134,7 +135,7 @@ function AppContent() {
                     await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
                     setShowProfile(false); setTestResult(null)
                     window.location.reload()
-                  } catch (e: any) { alert(e.message) }
+                  } catch (e: any) { toast.show(e.message, 'error') }
                 }}
                   className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
                   Guardar
@@ -150,5 +151,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return <AuthProvider><AppContent /></AuthProvider>
+  return <AuthProvider><ToastProvider><AppContent /></ToastProvider></AuthProvider>
 }

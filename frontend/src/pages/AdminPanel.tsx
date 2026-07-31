@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
+import { toast } from '../components/Toast'
 
 export default function AdminPanel() {
   const { user } = useAuth()
@@ -27,7 +28,7 @@ export default function AdminPanel() {
       setEditUser(null)
       const r = await fetch('/api/admin/usuarios', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
       setUsuarios(await r.json())
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast.show(e.message, 'error') }
   }
 
   if (!user?.is_admin) return <div className="text-center py-20 text-gray-400">Solo administradores</div>
