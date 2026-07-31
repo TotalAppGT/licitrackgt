@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 
+const MESES_NOMBRE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
 export default function FiltrosResultados() {
   const [filters, setFilters] = useState<any>({})
   const [results, setResults] = useState<any>(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [opciones, setOpciones] = useState<any>({ estados: [], categorias: [] })
+  const [opciones, setOpciones] = useState<any>({ estados: [], categorias: [], departamentos: [], metodos: [], modalidades: [] })
   const [meses, setMeses] = useState<any[]>([])
-  const [exporting, setExporting] = useState(false)
+  const [exporting, setExporting] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
+  const [destinatario, setDestinatario] = useState('')
 
   useEffect(() => {
     api.opciones().then(setOpciones)
@@ -21,11 +26,20 @@ export default function FiltrosResultados() {
     finally { setLoading(false) }
   }
 
-  const downloadCsv = async () => {
-    setExporting(true)
-    try { await api.exportLicitaciones(filters) }
+  const download = async (tipo: 'csv' | 'xlsx') => {
+    setExporting(tipo)
+    try { await (tipo === 'csv' ? api.exportCsv(filters) : api.exportXlsx(filters)) }
     catch (e: any) { alert(e.message) }
-    finally { setExporting(false) }
+    finally { setExporting(null) }
+  }
+
+  const sendEmail = async () => {
+    setSending(true)
+    try {
+      const res = await api.enviarResultados(filters, destinatario)
+      alert(`Correo enviado a ${res.enviado_a} con ${res.registros} registros`)
+    } catch (e: any) { alert(e.message) }
+    finally { setSending(false) }
   }
 
   const updateFilter = (key: string, value: string) => {
@@ -33,6 +47,16 @@ export default function FiltrosResultados() {
   }
 
   const totalPages = results ? Math.ceil(results.total / 50) : 0
+
+  const FiltroSelect = ({ label, opciones: opts, keyName, vacioLabel }: any) => (
+    <div>
+      <label className="text-xs text-gray-500">{label}</label>
+      <select onChange={e => updateFilter(keyName, e.target.value)} className="w-full text-sm border rounded-lg p-2 mt-1">
+        <option value="">{vacioLabel}</option>
+        {opts.map((o: string) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  )
 
   return (
     <div className="grid lg:grid-cols-4 gap-6">
@@ -52,48 +76,52 @@ export default function FiltrosResultados() {
                 <select onChange={e => updateFilter('mes', e.target.value)}
                   className="text-sm border rounded-lg p-2">
                   <option value="">Mes</option>
-                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m}</option>)}
+                  {MESES_NOMBRE.map((n, i) => <option key={i + 1} value={i + 1}>{n}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500">Estatus</label>
-              <select onChange={e => updateFilter('estatus', e.target.value)} className="w-full text-sm border rounded-lg p-2 mt-1">
-                <option value="">Todos</option>
-                {opciones.estados.map((e: string) => <option key={e} value={e}>{e}</option>)}
-              </select>
+              <label className="text-xs text-gray-500">Rango de fechas</label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <input type="date" onChange={e => updateFilter('fecha_desde', e.target.value)}
+                  className="text-sm border rounded-lg p-2" />
+                <input type="date" onChange={e => updateFilter('fecha_hasta', e.target.value)}
+                  className="text-sm border rounded-lg p-2" />
+              </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500">Categoria</label>
-              <select onChange={e => updateFilter('categoria', e.target.value)} className="w-full text-sm border rounded-lg p-2 mt-1">
-                <option value="">Todas</option>
-                {opciones.categorias.map((c: string) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Texto</label>
-              <input type="text" placeholder="Buscar..." onChange={e => updateFilter('texto', e.target.value)}
+              <label className="text-xs text-gray-500">Texto / keywords</label>
+              <input type="text" placeholder="Ej: mantenimiento, equipos, obra..." onChange={e => updateFilter('texto', e.target.value)}
                 className="w-full text-sm border rounded-lg p-2 mt-1" />
             </div>
+            <FiltroSelect label="Departamento" opciones={opciones.departamentos} keyName="departamento" vacioLabel="Todos" />
             <div>
-              <label className="text-xs text-gray-500">Entidad</label>
+              <label className="text-xs text-gray-500">Entidad (texto)</label>
               <input type="text" placeholder="Nombre de entidad..." onChange={e => updateFilter('entidad', e.target.value)}
                 className="w-full text-sm border rounded-lg p-2 mt-1" />
             </div>
+            <FiltroSelect label="Modalidad" opciones={opciones.modalidades} keyName="modalidad" vacioLabel="Todas" />
+            <FiltroSelect label="Metodo de compra" opciones={opciones.metodos} keyName="metodo" vacioLabel="Todos" />
+            <FiltroSelect label="Categoria" opciones={opciones.categorias} keyName="categoria" vacioLabel="Todas" />
+            <FiltroSelect label="Estatus" opciones={opciones.estados} keyName="estatus" vacioLabel="Todos" />
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-gray-500">Monto min</label>
-                <input type="number" placeholder="Q0" onChange={e => updateFilter('monto_min', e.target.value)}
+                <label className="text-xs text-gray-500">Monto min (Q)</label>
+                <input type="number" placeholder="0" onChange={e => updateFilter('monto_min', e.target.value)}
                   className="w-full text-sm border rounded-lg p-2 mt-1" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Monto max</label>
-                <input type="number" placeholder="Q999M" onChange={e => updateFilter('monto_max', e.target.value)}
+                <label className="text-xs text-gray-500">Monto max (Q)</label>
+                <input type="number" placeholder="999999" onChange={e => updateFilter('monto_max', e.target.value)}
                   className="w-full text-sm border rounded-lg p-2 mt-1" />
               </div>
             </div>
             <button onClick={() => search()} className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition">
               {loading ? 'Buscando...' : 'Buscar'}
+            </button>
+            <button onClick={() => { setFilters({}); setResults(null); setPage(1) }}
+              className="w-full text-sm text-gray-500 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
+              Limpiar filtros
             </button>
           </div>
         </div>
@@ -105,14 +133,27 @@ export default function FiltrosResultados() {
             <div className="text-center py-20 text-gray-400">Usa los filtros y presiona Buscar</div>
           ) : (
             <>
-              <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
                 <span className="text-sm font-medium">{results.total.toLocaleString()} resultados</span>
                 <div className="flex gap-2 items-center">
-                  <button onClick={downloadCsv} disabled={exporting}
+                  <div className="flex gap-1 items-center">
+                    <input type="email" placeholder="Enviar por correo a..." value={destinatario}
+                      onChange={e => setDestinatario(e.target.value)}
+                      className="text-xs border rounded-lg px-2 py-1.5 w-52" />
+                    <button onClick={sendEmail} disabled={sending || !destinatario}
+                      className="text-xs bg-blue-700 text-white px-3 py-1.5 rounded-lg hover:bg-blue-800 transition disabled:opacity-50">
+                      {sending ? 'Enviando...' : 'Enviar'}
+                    </button>
+                  </div>
+                  <button onClick={() => download('csv')} disabled={!!exporting}
                     className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition disabled:opacity-50">
-                    {exporting ? 'Descargando...' : 'Descargar CSV'}
+                    {exporting === 'csv' ? 'Generando...' : 'CSV'}
                   </button>
-                  <span className="text-gray-500">Pagina {page} de {totalPages}</span>
+                  <button onClick={() => download('xlsx')} disabled={!!exporting}
+                    className="text-xs bg-emerald-700 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-800 transition disabled:opacity-50">
+                    {exporting === 'xlsx' ? 'Generando...' : 'Excel (XLSX)'}
+                  </button>
+                  <span className="text-gray-500 text-xs">Pagina {page} de {totalPages}</span>
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -124,8 +165,9 @@ export default function FiltrosResultados() {
                       <th className="text-left p-3 font-medium">Titulo</th>
                       <th className="text-left p-3 font-medium">Entidad</th>
                       <th className="text-right p-3 font-medium">Monto</th>
+                      <th className="text-left p-3 font-medium">Modalidad</th>
+                      <th className="text-left p-3 font-medium">Departamento</th>
                       <th className="text-left p-3 font-medium">Estado</th>
-                      <th className="text-left p-3 font-medium">Categoria</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -138,8 +180,9 @@ export default function FiltrosResultados() {
                         <td className="p-3 text-xs text-right font-semibold text-blue-700">
                           {r.monto ? 'Q' + Number(r.monto).toLocaleString() : '-'}
                         </td>
+                        <td className="p-3 text-xs max-w-[140px] truncate">{r.modalidad}</td>
+                        <td className="p-3 text-xs">{r.departamento}</td>
                         <td className="p-3 text-xs"><span className="bg-gray-100 px-2 py-0.5 rounded">{r.estado}</span></td>
-                        <td className="p-3 text-xs">{r.categoria}</td>
                       </tr>
                     ))}
                   </tbody>

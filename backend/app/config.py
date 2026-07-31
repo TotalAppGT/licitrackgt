@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     RECURRENTE_SECRET_KEY: str = "sk_test_d4KdJ1bqY0V2VLxHZGmpJOejzU2AYQIIgQnf6BosJnxldKp5i5ljHCuT"
     RECURRENTE_WEBHOOK_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM: str = "LiciTrackGT <no-reply@licitrackgt.com>"
 
     class Config:
         env_file = ".env"

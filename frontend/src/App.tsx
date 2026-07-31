@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import FiltrosResultados from './pages/FiltrosResultados'
 import Suscripcion from './pages/Suscripcion'
+import Alertas from './pages/Alertas'
 
 function AppContent() {
   const { user, logout, loading } = useAuth()
@@ -15,6 +16,7 @@ function AppContent() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'filtros', label: 'Filtros' },
+    { id: 'alertas', label: 'Alertas' },
     { id: 'suscripcion', label: 'Suscripcion' },
   ]
 
@@ -42,6 +44,7 @@ function AppContent() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'filtros' && <FiltrosResultados />}
+        {tab === 'alertas' && <Alertas />}
         {tab === 'suscripcion' && <Suscripcion />}
       </main>
     </div>

@@ -41,9 +41,11 @@ async def migrate(sqlite_path, pg_url, limit=None):
                        "created_at TIMESTAMPTZ DEFAULT now())")
     insert = build_insert("licitaciones", COLS, "nog")
     try:
+        last_rowid = 0
         while True:
             rows = sql.execute(
-                f"SELECT {','.join(COLS)} FROM licitaciones ORDER BY anio, mes, nog LIMIT {BATCH} OFFSET {offset}"
+                f"SELECT {','.join(COLS)}, rowid FROM licitaciones WHERE rowid > ? ORDER BY rowid LIMIT {BATCH}",
+                (last_rowid,)
             ).fetchall()
             if not rows:
                 break
@@ -55,13 +57,19 @@ async def migrate(sqlite_path, pg_url, limit=None):
                         fp = date.fromisoformat(str(fp)[:10])
                     except ValueError:
                         fp = None
+                monto = r["monto"]
+                try:
+                    monto = float(monto) if monto not in (None, "") else 0.0
+                except (TypeError, ValueError):
+                    monto = 0.0
                 data.append((r["nog"], r["ocid"], fp, r["titulo"], r["entidad_compradora"],
-                             r["monto"], r["moneda"], r["estado"], r["categoria"],
+                             monto, r["moneda"], r["estado"], r["categoria"],
                              r["metodo"], r["modalidad"], r["departamento"], r["anio"], r["mes"]))
             await conn.executemany(insert, data)
             total += len(data)
             offset += len(data)
-            print(f"Migrados {total} registros...")
+            last_rowid = rows[-1]["rowid"]
+            print(f"Migrados {total} registros (rowid {last_rowid})...", flush=True)
             if limit and total >= limit:
                 break
         await conn.execute("CREATE INDEX IF NOT EXISTS ix_licitaciones_anio_mes ON licitaciones(anio, mes)")

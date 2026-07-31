@@ -2,6 +2,7 @@ import httpx
 from datetime import date
 from app.database import async_session
 from app.models import Licitacion, ExtractionLog
+from app.config import settings
 
 OCDS_BASE = "https://ocds.guatecompras.gt"
 
@@ -48,7 +49,9 @@ async def run_extraction(anio: int = None, mes: int = None):
                             fp = (release.get("date", "") or "")[:10]
                             fecha_pub = date.fromisoformat(fp) if fp else None
                         except: fecha_pub = None
-                        lic = Licitacion(
+                        from sqlalchemy.dialects.postgresql import insert as pg_insert
+                        from app.models import Licitacion as _L
+                        stmt = pg_insert(_L).values(
                             nog=nog, ocid=release.get("ocid", ""),
                             fecha_publicacion=fecha_pub,
                             titulo=tender.get("title", ""),
@@ -60,8 +63,22 @@ async def run_extraction(anio: int = None, mes: int = None):
                             metodo=tender.get("procurementMethod", ""),
                             modalidad=tender.get("procurementMethodDetails", ""),
                             anio=y, mes=mo,
+                        ).on_conflict_do_update(
+                            index_elements=[_L.nog],
+                            set_={
+                                "fecha_publicacion": stmt.excluded.fecha_publicacion,
+                                "titulo": stmt.excluded.titulo,
+                                "entidad_compradora": stmt.excluded.entidad_compradora,
+                                "monto": stmt.excluded.monto,
+                                "estado": stmt.excluded.estado,
+                                "categoria": stmt.excluded.categoria,
+                                "metodo": stmt.excluded.metodo,
+                                "modalidad": stmt.excluded.modalidad,
+                                "anio": stmt.excluded.anio,
+                                "mes": stmt.excluded.mes,
+                            }
                         )
-                        db.add(lic); count += 1
+                        await db.execute(stmt); count += 1
                         if count % 200 == 0: await db.flush()
                     await db.commit()
                     log = ExtractionLog(anio=y, mes=mo, records_count=count, status="completed")
@@ -70,3 +87,69 @@ async def run_extraction(anio: int = None, mes: int = None):
                 async with async_session() as db:
                     log = ExtractionLog(anio=y, mes=mo, records_count=0, status=f"error: {str(e)[:100]}")
                     db.add(log); await db.commit()
+
+async def refresh_ultimo_mes():
+    import asyncio
+    from datetime import datetime
+    ahora = datetime.utcnow()
+    try:
+        await run_extraction(anio=ahora.year, mes=ahora.month)
+    except Exception as e:
+        print(f"Auto-refresh fallo: {e}")
+
+async def procesar_alertas():
+    from sqlalchemy import select
+    from app.models import User, KeywordAlert
+    async with async_session() as db:
+        alertas = (await db.execute(select(KeywordAlert))).scalars().all()
+        usuarios = {}
+        for a in alertas:
+            usuarios.setdefault(a.user_id, []).append(a.keyword)
+        if not usuarios:
+            return
+        from datetime import datetime
+        ahora = datetime.utcnow()
+        user_rows = (await db.execute(select(User).where(User.id.in_(list(usuarios.keys()))))).scalars().all()
+        for u in user_rows:
+            keywords = usuarios[u.id]
+            if u.subscription_plan in ("free",) or u.subscription_status != "active":
+                continue
+            matches = []
+            from app.models import Licitacion
+            for kw in keywords:
+                q = select(Licitacion).where(
+                    Licitacion.titulo.ilike(f"%{kw}%"),
+                    Licitacion.anio == ahora.year,
+                    Licitacion.mes == ahora.month,
+                ).limit(20)
+                for r in (await db.execute(q)).scalars().all():
+                    matches.append({"keyword": kw, "nog": r.nog, "titulo": r.titulo,
+                                    "monto": r.monto or 0, "fecha": str(r.fecha_publicacion or "")})
+            if matches:
+                lista = "".join(
+                    f'<li><b>{m["keyword"]}</b> - <a href="https://guatecompras.gt/procesos/{m["nog"]}">{m["titulo"]}</a> - Q{float(m["monto"]):,.0f} ({m["fecha"]})</li>'
+                    for m in matches[:50])
+                html = f"""<div style="font-family:Arial;max-width:600px;margin:auto">
+                    <h2 style="color:#1a3a5c">LiciTrackGT - {len(matches)} alertas este mes</h2>
+                    <p>Nuevas licitaciones que coinciden con tus keywords:</p>
+                    <ul>{lista}</ul>
+                    <p><a href="{settings.FRONTEND_URL}">Abrir LiciTrackGT</a></p>
+                    <p style="color:#888;font-size:12px">Para dejar de recibir alertas, elimina la keyword en tu panel.</p></div>"""
+                from app.services.email_service import enviar_correo
+                try:
+                    await enviar_correo([u.email], f"LiciTrackGT: {len(matches)} nuevas coincidencias", html)
+                except Exception as e:
+                    print(f"Error alerta para {u.email}: {e}")
+
+async def background_auto_refresh():
+    import asyncio
+    while True:
+        try:
+            await refresh_ultimo_mes()
+        except Exception as e:
+            print(f"Auto-refresh error: {e}")
+        try:
+            await procesar_alertas()
+        except Exception as e:
+            print(f"Alertas error: {e}")
+        await asyncio.sleep(6 * 3600)
