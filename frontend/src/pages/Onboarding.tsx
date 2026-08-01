@@ -110,7 +110,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
               </p>
               <input type="text" value={waPhone} onChange={e => setWaPhone(e.target.value)}
                 placeholder="502XXXXXXXX" className="w-full text-sm border rounded-lg p-2.5" />
-              <p className="text-[10px] text-gray-400 mt-1">Guatemala: 502 + tu número de 8 dígitos. Sin espacios, sin +</p>
+              <p className="text-[10px] text-gray-400 mt-1">Guatemala: 502 + tu numero de 8 digitos. Sin espacios, sin +</p>
             </div>
 
             {testResult && (

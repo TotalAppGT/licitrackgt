@@ -149,7 +149,7 @@ function AppContent() {
                 <input type="text" value={waPhone} placeholder="502XXXXXXXX"
                   onChange={e => setWaPhone(e.target.value)}
                   className="w-full text-sm border rounded-lg p-2 mt-1" />
-                <p className="text-[10px] text-gray-400 mt-1">Ej: 50235187153 (Guatemala). Sin el +</p>
+                <p className="text-[10px] text-gray-400 mt-1">Ej: 50255551234 (Guatemala). Sin espacios, sin +</p>
               </div>
               
               <div className="bg-green-50 rounded-lg p-3 text-xs text-green-800">
