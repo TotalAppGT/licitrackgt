@@ -148,6 +148,16 @@ function AppContent() {
                 <p className="text-[10px] text-gray-400 mt-1">Ej: 50235187153 (Guatemala). Sin el +</p>
               </div>
               
+              <div className="bg-green-50 rounded-lg p-3 text-xs text-green-800">
+                <p className="font-semibold mb-1">Importante para WhatsApp:</p>
+                <p>Envía primero un mensaje a nuestro número para activar las alertas:</p>
+                <a href="https://wa.me/50258309505?text=Hola%20LiciTrackGT%20act%C3%ADvame%20las%20alertas"
+                  target="_blank" rel="noopener"
+                  className="inline-flex items-center gap-1 mt-1.5 bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-600 transition">
+                  📱 Enviar mensaje por WhatsApp
+                </a>
+              </div>
+              
               <div className="flex gap-2">
                 <button onClick={async () => {
                   setTesting(true); setTestResult(null)
