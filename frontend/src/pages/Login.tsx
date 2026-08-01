@@ -48,17 +48,24 @@ export default function Login() {
   }
 
   const planes = [
-    { name: 'Explorador', precio: 'Gratis', color: 'gray', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ eventos', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
-    { name: 'Básico', precio: 'Q349', color: 'blue', desc: 'Alertas y exportación', features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'], cta: 'Elegir Básico' },
+    { name: 'Explorador', precio: 'Gratis', color: 'slate', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ eventos', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
+    { name: 'Básico', precio: 'Q349', color: 'emerald', desc: 'Alertas y exportación', features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'], cta: 'Elegir Básico' },
     { name: 'Pro', precio: 'Q599', color: 'navy', desc: 'Completo para empresas', popular: true, features: ['50 palabras clave', '30 seguimientos', '5 reportes programados', 'WhatsApp + Correo', 'Export XLSX profesional', 'Hasta 3 usuarios'], cta: 'Elegir Pro' },
-    { name: 'Enterprise', precio: 'Q999', color: 'amber', desc: 'Para equipos grandes', features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp prioritario', 'API acceso', '10 usuarios', 'Soporte dedicado'], cta: 'Elegir Enterprise' },
+    { name: 'Enterprise', precio: 'Q999', color: 'violet', desc: 'Para equipos grandes', features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp prioritario', 'API acceso', '10 usuarios', 'Soporte dedicado'], cta: 'Elegir Enterprise' },
   ]
 
   const colorMap: Record<string, string> = {
-    gray: 'border-gray-200 hover:border-gray-300',
-    blue: 'border-blue-200 hover:border-blue-400',
-    navy: 'border-[#1a3a5c]/30 hover:border-[#1a3a5c] shadow-lg',
-    amber: 'border-amber-200 hover:border-amber-400',
+    slate: 'border-slate-200 hover:border-slate-400 bg-white',
+    emerald: 'border-emerald-200 hover:border-emerald-400 bg-gradient-to-b from-white to-emerald-50/30',
+    navy: 'border-[#1a3a5c]/30 hover:border-[#1a3a5c] shadow-xl bg-gradient-to-b from-white to-blue-50/30',
+    violet: 'border-violet-200 hover:border-violet-400 bg-gradient-to-b from-white to-violet-50/30',
+  }
+
+  const btnColor: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+    emerald: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    navy: 'bg-[#1a3a5c] text-white hover:bg-[#2b579a]',
+    violet: 'bg-violet-600 text-white hover:bg-violet-700',
   }
 
   if (view === 'login' || view === 'register') {
@@ -144,7 +151,7 @@ export default function Login() {
                 {p.features.map(f => <li key={f} className="flex items-start gap-1.5"><span className="text-green-500 font-bold">✓</span>{f}</li>)}
               </ul>
               <button onClick={() => setView('register')}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${p.popular ? 'bg-[#1a3a5c] text-white hover:bg-[#2b579a]' : p.precio === 'Gratis' ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}>
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${btnColor[p.color]}`}>
                 {p.cta}
               </button>
             </div>
