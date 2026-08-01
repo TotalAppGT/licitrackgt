@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { api } from '../api/client'
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../firebase'
-import { toast } from '../components/Toast'
 
 export default function Login() {
   const { login } = useAuth()
@@ -12,32 +10,25 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showPlans, setShowPlans] = useState(false)
+  const [view, setView] = useState<'landing' | 'login' | 'register'>('landing')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true)
+  const handleAuth = async (register: boolean) => {
+    setError(''); setLoading(true)
     try {
       let fbUser
-      if (isRegister) {
-        fbUser = await registerWithEmail(email, password)
-      } else {
-        try { fbUser = await loginWithEmail(email, password) }
-        catch { /* fallback to old login */ }
-      }
+      if (register) fbUser = await registerWithEmail(email, password)
+      else { try { fbUser = await loginWithEmail(email, password) } catch {} }
       if (fbUser) {
         const fbToken = await fbUser.user.getIdToken()
         const res = await fetch('/api/auth/firebase', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ firebase_token: fbToken, name }),
         })
         const data = await res.json()
         localStorage.setItem('token', data.access_token)
         window.location.reload()
-      } else {
-        await login(email, password)
-      }
-    } catch (err: any) { setError(err.message?.replace('Firebase: ', '') || 'Error') }
+      } else { await login(email, password) }
+    } catch (err: any) { setError(err.message?.replace('Firebase: ', '') || 'Error al ingresar') }
     finally { setLoading(false) }
   }
 
@@ -47,164 +38,124 @@ export default function Login() {
       const fbUser = await loginWithGoogle()
       const fbToken = await fbUser.user.getIdToken()
       const res = await fetch('/api/auth/firebase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firebase_token: fbToken }),
       })
-      const data = await res.json()
-      localStorage.setItem('token', data.access_token)
+      localStorage.setItem('token', (await res.json()).access_token)
       window.location.reload()
-    } catch (err: any) { setError(err.message?.replace('Firebase: ', '') || 'Error de Google') }
+    } catch (err: any) { setError('Error con Google') }
     finally { setLoading(false) }
   }
 
   const planes = [
-    { id: 'free', name: 'Explorador', precio: 'Gratis', color: 'gray', desc: 'Para empezar a buscar licitaciones' },
-    { id: 'basico', name: 'Básico', precio: 'Q349/mes', color: 'blue', desc: 'Alertas, CSV y Pipeline' },
-    { id: 'pro', name: 'Pro', precio: 'Q599/mes', color: 'navy', desc: 'Alertas WhatsApp, XLSX, multi-usuario', popular: true },
-    { id: 'enterprise', name: 'Enterprise', precio: 'Q999/mes', color: 'amber', desc: 'Ilimitado, API, soporte dedicado' },
+    { name: 'Explorador', precio: 'Gratis', color: 'gray', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ licitaciones', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
+    { name: 'Básico', precio: 'Q349', color: 'blue', desc: 'Alertas y exportación', features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'], cta: 'Elegir Básico' },
+    { name: 'Pro', precio: 'Q599', color: 'navy', desc: 'Completo para empresas', popular: true, features: ['50 palabras clave', '30 seguimientos', '5 reportes programados', 'WhatsApp + Correo', 'Export XLSX profesional', 'Hasta 3 usuarios'], cta: 'Elegir Pro' },
+    { name: 'Enterprise', precio: 'Q999', color: 'amber', desc: 'Para equipos grandes', features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp prioritario', 'API acceso', '10 usuarios', 'Soporte dedicado'], cta: 'Elegir Enterprise' },
   ]
 
-  if (showPlans) return <LandingPlans onBack={() => setShowPlans(false)} />
+  const colorMap: Record<string, string> = {
+    gray: 'border-gray-200 hover:border-gray-300',
+    blue: 'border-blue-200 hover:border-blue-400',
+    navy: 'border-[#1a3a5c]/30 hover:border-[#1a3a5c] shadow-lg',
+    amber: 'border-amber-200 hover:border-amber-400',
+  }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d2137] to-[#1a3a5c] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl grid lg:grid-cols-2">
-        <div className="bg-[#1a3a5c] text-white p-8 flex flex-col justify-center">
-          <div className="mb-6">
-            <h1 className="text-3xl font-extrabold tracking-tight">LiciTrack<span className="text-cyan-400">GT</span></h1>
-            <p className="text-white/60 mt-2 text-sm">Monitoreo inteligente de licitaciones de Guatecompras</p>
-          </div>
-          <div className="space-y-3 text-sm text-white/70">
-            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">1.7M+</span> licitaciones en tu buscador</div>
-            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">15 min</span> actualización automática</div>
-            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">WhatsApp</span> + correo para tus alertas</div>
-            <div className="flex items-center gap-2"><span className="text-cyan-400 font-bold">Seguimiento</span> con fechas límite</div>
-          </div>
-          <button onClick={() => setShowPlans(true)}
-            className="mt-6 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl font-medium transition text-sm border border-white/20">
-            Ver planes y precios
-          </button>
-        </div>
-
-        <div className="p-8">
+  if (view === 'login' || view === 'register') {
+    const isReg = view === 'register'
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0d2137] to-[#1a3a5c] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+          <button onClick={() => setView('landing')} className="text-sm text-gray-400 hover:text-gray-600 mb-4">&larr; Volver</button>
           <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">{isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</h2>
-            <p className="text-gray-400 text-xs mt-1">{isRegister ? 'Comienza gratis en segundos' : 'Accede a tu cuenta'}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{isReg ? 'Crear cuenta gratis' : 'Iniciar sesión'}</h2>
+            <p className="text-gray-400 text-sm mt-1">{isReg ? 'Accede a 1.7M+ licitaciones' : 'Continúa donde lo dejaste'}</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {isRegister && (
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-200 outline-none"
-                  placeholder="Tu nombre" required />
-              </div>
-            )}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-200 outline-none"
-                placeholder="tu@email.com" required />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Contraseña</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-200 outline-none"
-                placeholder="••••••••" required />
-            </div>
+          <form onSubmit={e => { e.preventDefault(); handleAuth(isReg) }} className="space-y-3">
+            {isReg && <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />}
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />
             {error && <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl">{error}</div>}
-            <button type="submit" disabled={loading}
-              className="w-full bg-[#1a3a5c] text-white py-2.5 rounded-xl font-semibold hover:bg-[#2b579a] transition disabled:opacity-50 text-sm">
-              {loading ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Ingresar'}
+            <button type="submit" disabled={loading} className="w-full bg-[#1a3a5c] text-white py-2.5 rounded-xl font-semibold hover:bg-[#2b579a] transition disabled:opacity-50 text-sm">
+              {loading ? 'Procesando...' : isReg ? 'Crear cuenta gratis' : 'Ingresar'}
             </button>
-            
-            <div className="flex items-center gap-3 my-2">
-              <hr className="flex-1 border-gray-200" />
-              <span className="text-xs text-gray-400">o</span>
-              <hr className="flex-1 border-gray-200" />
-            </div>
-            
-            <button type="button" onClick={handleGoogleLogin} disabled={loading}
-              className="w-full bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+            <div className="flex items-center gap-3 my-1"><hr className="flex-1 border-gray-200" /><span className="text-xs text-gray-400">o</span><hr className="flex-1 border-gray-200" /></div>
+            <button type="button" onClick={handleGoogleLogin} disabled={loading} className="w-full bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition text-sm flex items-center justify-center gap-2">
               <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
               Continuar con Google
             </button>
           </form>
-
           <p className="text-center text-xs text-gray-400 mt-4">
-            {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}{' '}
-            <button onClick={() => { setIsRegister(!isRegister); setError('') }}
-              className="text-blue-600 hover:underline font-medium">
-              {isRegister ? 'Inicia sesión' : 'Crear cuenta gratis'}
+            {isReg ? '¿Ya tienes cuenta?' : '¿Primera vez?'}{' '}
+            <button onClick={() => setView(isReg ? 'login' : 'register')} className="text-blue-600 hover:underline font-medium">
+              {isReg ? 'Inicia sesión' : 'Crear cuenta'}
             </button>
           </p>
         </div>
       </div>
-    </div>
-  )
-}
-
-function LandingPlans({ onBack }: { onBack: () => void }) {
-  const [form, setForm] = useState({ email: '', password: '', name: '' })
-  const planos = [
-    { id: 'free', name: 'Explorador', price: 0, features: ['5 palabras clave', 'Buscar 1.7M+ licitaciones', 'Dashboard con gráficos', 'Filtros avanzados'] },
-    { id: 'basico', name: 'Básico', price: 349, popular: false, features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'] },
-    { id: 'pro', name: 'Pro', price: 599, popular: true, features: ['50 palabras clave', '30 seguimientos', '5 reportes programados', 'Export XLSX', 'WhatsApp + Correo', 'Hasta 3 usuarios'] },
-    { id: 'enterprise', name: 'Enterprise', price: 999, popular: false, features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp + Correo prioritario', 'API acceso', 'Hasta 10 usuarios', 'Soporte dedicado'] },
-  ]
-
-  const registerAndGo = async (planId: string) => {
-    try {
-      await api.register(form.email, form.password, form.name)
-      const res = await api.login(form.email, form.password)
-      localStorage.setItem('token', res.access_token)
-      if (planId !== 'free') {
-        const priceIds: Record<string, string> = { basico: 'price_lltzdrus', pro: 'price_kyqlcwp6', enterprise: 'price_n2pdn7xh' }
-        const checkRes = await api.createCheckout(priceIds[planId])
-        window.location.href = checkRes.url
-      } else {
-        window.location.href = '/'
-      }
-    } catch (e: any) { alert(e.message) }
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
-          <button onClick={onBack} className="text-sm text-gray-400 hover:text-gray-600 mb-4">&larr; Volver</button>
-          <h1 className="text-3xl font-extrabold text-gray-900">Planes LiciTrackGT</h1>
-          <p className="text-gray-500 mt-2 max-w-lg mx-auto">Elige el plan que mejor se adapte a tu empresa. Sin contratos, cancela cuando quieras.</p>
+    <div className="min-h-screen bg-white">
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-[#0d2137] to-[#1a3a5c] text-white">
+        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            Encuentra oportunidades<br />en <span className="text-cyan-400">Guatecompras</span> al instante
+          </h1>
+          <p className="text-white/60 mt-4 text-lg max-w-2xl mx-auto">
+            Monitoreo inteligente de licitaciones. Alertas por WhatsApp y correo. Pipeline de seguimiento. Todo en un solo lugar.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center mt-8">
+            <button onClick={() => setView('register')}
+              className="bg-cyan-400 text-black px-8 py-3 rounded-xl font-bold text-lg hover:bg-cyan-300 transition shadow-lg shadow-cyan-500/30">
+              Probar gratis →
+            </button>
+            <button onClick={() => setView('login')}
+              className="bg-white/10 text-white px-6 py-3 rounded-xl font-medium hover:bg-white/20 transition border border-white/20">
+              Ya tengo cuenta
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-6 justify-center mt-10 text-sm text-white/40">
+            <span>✓ 1.7M+ licitaciones</span>
+            <span>✓ Sin tarjeta de crédito</span>
+            <span>✓ Acceso inmediato</span>
+          </div>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-4 gap-4 mb-10">
-          {planos.map(p => (
-            <div key={p.id} className={`relative bg-white rounded-2xl shadow-sm border-2 p-5 flex flex-col ${p.popular ? 'border-[#1a3a5c] shadow-lg' : 'border-gray-100'}`}>
+      {/* Plans */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-extrabold text-gray-900">Planes que escalan con tu empresa</h2>
+          <p className="text-gray-500 mt-2">Desde gratis hasta inteligencia de mercado completa. Sin contratos forzosos.</p>
+        </div>
+        <div className="grid md:grid-cols-4 gap-4">
+          {planes.map(p => (
+            <div key={p.name} className={`relative bg-white rounded-2xl border-2 ${colorMap[p.color]} p-5 flex flex-col transition`}>
               {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1a3a5c] text-white text-xs font-bold px-3 py-1 rounded-full">Más popular</div>}
               <h3 className="font-bold text-gray-800">{p.name}</h3>
-              <div className="mt-2 mb-3">
-                {p.price === 0 ? <span className="text-2xl font-extrabold">Gratis</span> : <><span className="text-2xl font-extrabold">Q{p.price}</span><span className="text-gray-400 text-sm">/mes</span></>}
+              <p className="text-xs text-gray-400 mt-0.5">{p.desc}</p>
+              <div className="mt-3 mb-4">
+                {p.precio === 'Gratis' ? <span className="text-3xl font-extrabold">Gratis</span> : <><span className="text-3xl font-extrabold">{p.precio}</span><span className="text-gray-400 text-sm">/mes</span></>}
               </div>
-              <ul className="space-y-1.5 text-xs text-gray-600 mb-4 flex-1">
-                {p.features.map(f => <li key={f} className="flex items-start gap-1.5"><span className="text-green-500 mt-0.5">✓</span>{f}</li>)}
+              <ul className="space-y-2 text-xs text-gray-600 mb-5 flex-1">
+                {p.features.map(f => <li key={f} className="flex items-start gap-1.5"><span className="text-green-500 font-bold">✓</span>{f}</li>)}
               </ul>
-              <div className="space-y-1">
-                <input type="email" placeholder="Email" onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="w-full text-xs border rounded-lg p-1.5" />
-                <input type="password" placeholder="Contraseña" onChange={e => setForm({ ...form, password: e.target.value })}
-                  className="w-full text-xs border rounded-lg p-1.5" />
-                <input type="text" placeholder="Nombre" onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="w-full text-xs border rounded-lg p-1.5" />
-                <button onClick={() => registerAndGo(p.id)}
-                  className={`w-full py-2 rounded-lg text-xs font-semibold transition ${p.popular ? 'bg-[#1a3a5c] text-white hover:bg-[#2b579a]' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}>
-                  {p.price === 0 ? 'Empezar gratis' : 'Suscribirse'}
-                </button>
-              </div>
+              <button onClick={() => setView('register')}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${p.popular ? 'bg-[#1a3a5c] text-white hover:bg-[#2b579a]' : p.precio === 'Gratis' ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}>
+                {p.cta}
+              </button>
             </div>
           ))}
         </div>
+        <p className="text-center text-xs text-gray-400 mt-8">Pagos seguros con Recurrente. Factura en Quetzales. Cancela cuando quieras.</p>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-gray-50 text-center py-8 text-xs text-gray-400">
+        LiciTrackGT · Monitoreo inteligente de Guatecompras · {new Date().getFullYear()}
       </div>
     </div>
   )
