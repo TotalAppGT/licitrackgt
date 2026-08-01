@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../firebase'
+import { sendPasswordResetEmail } from 'firebase/auth'
+import { auth } from '../firebase'
 
 export default function Login() {
   const { login } = useAuth()
@@ -11,6 +13,17 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'landing' | 'login' | 'register'>('landing')
+  const [resetSent, setResetSent] = useState(false)
+
+  const handleForgotPass = async () => {
+    if (!email) { setError('Ingresa tu email primero'); return }
+    setLoading(true); setError('')
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setResetSent(true)
+    } catch (err: any) { setError('Error al enviar. Verifica tu email.') }
+    finally { setLoading(false) }
+  }
 
   const handleAuth = async (register: boolean) => {
     setError(''); setLoading(true)
@@ -82,7 +95,16 @@ export default function Login() {
             {isReg && <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />}
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />
+            {resetSent && <div className="bg-green-50 text-green-700 text-xs p-3 rounded-xl">Revisa tu email. Te enviamos un enlace para restablecer tu contraseña.</div>}
             {error && <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl">{error}</div>}
+            {!isReg && (
+              <p className="text-right">
+                <button type="button" onClick={handleForgotPass}
+                  className="text-xs text-gray-400 hover:text-blue-600">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </p>
+            )}
             <button type="submit" disabled={loading} className="w-full bg-[#1a3a5c] text-white py-2.5 rounded-xl font-semibold hover:bg-[#2b579a] transition disabled:opacity-50 text-sm">
               {loading ? 'Procesando...' : isReg ? 'Crear cuenta gratis' : 'Ingresar'}
             </button>

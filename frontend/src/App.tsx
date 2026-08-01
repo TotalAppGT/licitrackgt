@@ -12,6 +12,7 @@ import Onboarding from './pages/Onboarding'
 import Equipo from './pages/Equipo'
 import EventoDetalle from './pages/EventoDetalle'
 import Tour from './pages/Tour'
+import HelpBar from './pages/HelpBar'
 
 function CountdownDisplay() {
   const [next, setNext] = useState<number | null>(null)
@@ -248,6 +249,7 @@ function AppContent() {
       {showOnboarding && <Onboarding onComplete={() => { setShowOnboarding(false); localStorage.setItem('onboarding_done', '1') }} />}
       {showTour && <Tour onClose={() => { setShowTour(false); localStorage.setItem('tour_done', '1') }} />}
       {eventoNog && <EventoDetalle nog={eventoNog} onClose={() => { setEventoNog(null); window.history.pushState({}, '', '/') }} />}
+      <HelpBar tab={tab} />
     </div>
   )
 }
