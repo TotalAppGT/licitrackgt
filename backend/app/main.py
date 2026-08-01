@@ -850,6 +850,20 @@ async def eliminar_miembro(member_id: int, user: User = Depends(get_current_user
     await db.commit()
     return {"ok": True}
 
+@app.post("/api/team/resend-invite/{member_id}")
+async def reenviar_invitacion(member_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    owner_id = user.main_user_id or user.id
+    member = await db.get(User, member_id)
+    if not member or member.main_user_id != owner_id:
+        raise HTTPException(status_code=404, detail="Miembro no encontrado")
+    import secrets
+    temp_pass = secrets.token_urlsafe(8)
+    member.password_hash = hash_password(temp_pass)
+    await db.commit()
+    owner = await db.get(User, owner_id)
+    _send_invite_email(member.email, member.name, owner.email, temp_pass)
+    return {"ok": True, "email": member.email}
+
 class EnviarCorreoRequest(BaseModel):
     destinatario: str = ""
     asunto: Optional[str] = None

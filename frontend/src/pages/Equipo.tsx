@@ -51,6 +51,14 @@ export default function Equipo() {
     } catch (e: any) { toast.show(e.message, 'error') }
   }
 
+  const resend = async (id: number, email: string) => {
+    try {
+      const res = await fetch(`/api/team/resend-invite/${id}`, { method: 'POST', headers })
+      if (!res.ok) throw new Error('Error al reenviar')
+      toast.show(`Nueva contraseña enviada a ${email}`, 'success')
+    } catch (e: any) { toast.show(e.message, 'error') }
+  }
+
   const maxUsers = user?.plan ? (MAX_USERS[user.plan] || 1) : 1
 
   return (
@@ -86,10 +94,17 @@ export default function Equipo() {
                 <div className="text-xs text-gray-500">{m.email}</div>
                 {m.status && <span className={`text-xs px-1.5 py-0.5 rounded-full ${m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{m.status === 'active' ? 'Activo' : 'Pendiente'}</span>}
               </div>
-              <button onClick={() => remove(m.id)}
-                className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">
-                Eliminar
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => resend(m.id, m.email)}
+                  className="text-xs text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"
+                  title="Reenviar contraseña">
+                  Reenviar clave
+                </button>
+                <button onClick={() => remove(m.id)}
+                  className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">
+                  Eliminar
+                </button>
+              </div>
             </div>
           ))}
         </div>
