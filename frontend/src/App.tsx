@@ -11,6 +11,7 @@ import AdminPanel from './pages/AdminPanel'
 import Onboarding from './pages/Onboarding'
 import Equipo from './pages/Equipo'
 import EventoDetalle from './pages/EventoDetalle'
+import Tour from './pages/Tour'
 
 function CountdownDisplay() {
   const [next, setNext] = useState<number | null>(null)
@@ -50,6 +51,7 @@ function AppContent() {
   const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [eventoNog, setEventoNog] = useState<string | null>(null)
+  const [showTour, setShowTour] = useState(false)
 
   useEffect(() => {
     if (user && !localStorage.getItem('onboarding_done')) {
@@ -108,6 +110,8 @@ function AppContent() {
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${user.plan === 'enterprise' ? 'bg-amber-500 text-black' : user.plan === 'pro' ? 'bg-blue-400 text-black' : 'bg-green-500 text-black'}`}>{user.plan}</span>
           {user.is_admin && <span className="bg-yellow-400 text-black px-1.5 py-0.5 rounded text-[10px] font-bold">ADMIN</span>}
           <button onClick={logout} className="hover:bg-white/10 px-2 py-1 rounded-lg transition text-white/60 hover:text-white">Salir</button>
+          <button onClick={() => setShowTour(true)}
+            className="text-white/40 hover:text-white text-lg ml-1" title="Tutorial guiado">?</button>
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 py-6">
@@ -151,11 +155,28 @@ function AppContent() {
               <div className="bg-green-50 rounded-lg p-3 text-xs text-green-800">
                 <p className="font-semibold mb-1">Importante para WhatsApp:</p>
                 <p>Envía primero un mensaje a nuestro número para activar las alertas:</p>
-                <a href="https://wa.me/50258309505?text=Hola%20LiciTrackGT%20act%C3%ADvame%20las%20alertas"
+                <a href="https://wa.me/50258309505?text=Hola%20LiciTrackGT%20quiero%20vincular%20mi%20numero%20para%20alertas"
                   target="_blank" rel="noopener"
                   className="inline-flex items-center gap-1 mt-1.5 bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-600 transition">
-                  📱 Enviar mensaje por WhatsApp
+                  📱 Enviar mensaje para vincular
                 </a>
+                {user.whatsapp_phone && (
+                  <button onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token')
+                      await fetch('/api/auth/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ whatsapp_phone: '' }),
+                      })
+                      setWaPhone('')
+                      window.location.reload()
+                    } catch (e: any) { toast.show('Error al desvincular', 'error') }
+                  }}
+                    className="ml-2 text-red-500 hover:text-red-700 text-[10px] underline">
+                    Desvincular WhatsApp
+                  </button>
+                )}
               </div>
               
               <div className="flex gap-2">
@@ -225,6 +246,7 @@ function AppContent() {
         </div>
       )}
       {showOnboarding && <Onboarding onComplete={() => { setShowOnboarding(false); localStorage.setItem('onboarding_done', '1') }} />}
+      {showTour && <Tour onClose={() => { setShowTour(false); localStorage.setItem('tour_done', '1') }} />}
       {eventoNog && <EventoDetalle nog={eventoNog} onClose={() => { setEventoNog(null); window.history.pushState({}, '', '/') }} />}
     </div>
   )
