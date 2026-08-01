@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+﻿from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,9 +35,9 @@ def _send_invite_email(to_email: str, name: str, owner_email: str, temp_password
                 <h2 style="color:#1a3a5c">Bienvenido a LiciTrackGT</h2>
                 <p>Hola {name or 'usuario'},</p>
                 <p>{owner_email} te ha invitado a colaborar en <b>LiciTrackGT</b>.</p>
-                {f'<p>Tu contraseña temporal: <b style="font-size:18px;background:#f0f0f0;padding:4px 8px;border-radius:4px">{temp_password}</b></p>' if temp_password else '<p>Ya tienes una cuenta. Tu acceso ha sido actualizado.</p>'}
+                {f'<p>Tu contraseÃ±a temporal: <b style="font-size:18px;background:#f0f0f0;padding:4px 8px;border-radius:4px">{temp_password}</b></p>' if temp_password else '<p>Ya tienes una cuenta. Tu acceso ha sido actualizado.</p>'}
                 <p>Ingresa en: <a href="{url}" style="color:#1a5fb4">{url}</a></p>
-                <p style="margin-top:16px">Desde aqui podras buscar licitaciones, configurar alertas y dar seguimiento a tus oportunidades.</p>
+                <p style="margin-top:16px">Desde aqui podras buscar eventos, configurar alertas y dar seguimiento a tus oportunidades.</p>
                 <p style="color:#888;font-size:12px">LiciTrackGT - Monitoreo inteligente de Guatecompras</p></div>"""
             await enviar_correo([to_email], "Has sido invitado a LiciTrackGT", html)
         except Exception as e:
@@ -157,7 +157,7 @@ async def update_profile(req: UpdateProfileRequest, user: User = Depends(get_cur
     if req.whatsapp_phone is not None: user.whatsapp_phone = req.whatsapp_phone.strip() or None
     if req.new_password:
         if not req.current_password or not verify_password(req.current_password, user.password_hash):
-            raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+            raise HTTPException(status_code=400, detail="ContraseÃ±a actual incorrecta")
         user.password_hash = hash_password(req.new_password)
     await db.commit()
     return {"ok": True, "whatsapp_phone": user.whatsapp_phone or "", "password_changed": bool(req.new_password)}
@@ -185,10 +185,10 @@ async def test_notification(req: TestNotificationRequest, user: User = Depends(g
             ok = await enviar_whatsapp(phone,
                 "LiciTrackGT - Prueba de WhatsApp\n\n"
                 "Este es un mensaje de prueba para confirmar que recibiras tus alertas por aqui.\n\n"
-                "Cuando haya nuevas licitaciones que coincidan con tus keywords, te llegara un aviso como este.")
+                "Cuando haya nuevas eventos que coincidan con tus keywords, te llegara un aviso como este.")
             result["whatsapp"] = ok
             if not ok:
-                result["whatsapp_error"] = "No se pudo enviar (verifica token/número)"
+                result["whatsapp_error"] = "No se pudo enviar (verifica token/nÃºmero)"
         except Exception as e:
             result["whatsapp_error"] = str(e)[:100]
     else:
@@ -377,7 +377,7 @@ async def export_licitaciones_xlsx(f: FiltrosQuery, user: User = Depends(get_cur
     rows = (await db.execute(q.order_by(Licitacion.id))).scalars().all()
     wb = Workbook()
     ws = wb.active
-    ws.title = "Licitaciones"
+    ws.title = "Eventos"
     header_fill = PatternFill("solid", fgColor="1A3A5C")
     header_font = Font(color="FFFFFF", bold=True)
     ws.append(CSV_HEADERS)
@@ -619,7 +619,7 @@ async def test_alerta(alert_id: int, user: User = Depends(get_current_user), db:
     if not rows:
         raise HTTPException(status_code=400, detail="No se encontraron coincidencias para esta palabra clave este mes")
     lista = "".join(
-        f'<li><a href="https://guatecompras.gt/procesos/{r.nog}" style="color:#1a5fb4">{r.titulo}</a> - Q{float(r.monto or 0):,.0f}</li>'
+        f'<li><a href="{settings.FRONTEND_URL}/e/{r.nog}" style="color:#1a5fb4">{r.titulo}</a> - Q{float(r.monto or 0):,.0f}</li>'
         for r in rows[:10])
     html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
         <h2 style="color:#1a3a5c">LiciTrackGT - Prueba de alerta</h2>
@@ -883,7 +883,7 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
     from openpyxl.utils import get_column_letter
     wb = Workbook()
     ws = wb.active
-    ws.title = "Licitaciones"
+    ws.title = "Eventos"
     header_fill = PatternFill("solid", fgColor="1A3A5C")
     header_font = Font(color="FFFFFF", bold=True)
     ws.append(CSV_HEADERS)
@@ -903,24 +903,24 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
     xlsx_bytes = xbio.getvalue()
 
     fila = "".join(
-        f'<tr><td>{r.nog}</td><td>{r.fecha_publicacion}</td><td><a href="https://guatecompras.gt/procesos/{r.nog}" style="color:#1a5fb4">{r.titulo}</a></td>'
+        f'<tr><td>{r.nog}</td><td>{r.fecha_publicacion}</td><td><a href="{settings.FRONTEND_URL}/e/{r.nog}" style="color:#1a5fb4">{r.titulo}</a></td>'
         f'<td style="text-align:right">Q{float(r.monto or 0):,.0f}</td><td>{r.entidad_compradora}</td></tr>'
         for r in rows[:80])
     html = f"""<div style="font-family:Arial;max-width:700px;margin:auto;color:#222">
-        <h2 style="color:#1a3a5c">LiciTrackGT - {len(rows)} licitaciones</h2>
+        <h2 style="color:#1a3a5c">LiciTrackGT - {len(rows)} eventos</h2>
         <p>Filtro: <b>{titulo_filtro}</b></p>
         <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">
             <tr style="background:#1a3a5c;color:#fff;text-align:left">
                 <th>NOG</th><th>Fecha</th><th>Titulo</th><th>Monto</th><th>Entidad</th></tr>
             {fila}
         </table>
-        <p style="margin-top:16px">Adjunto: <b>XLSX</b> con el detalle completo de {len(rows)} licitaciones.</p>
+        <p style="margin-top:16px">Adjunto: <b>XLSX</b> con el detalle completo de {len(rows)} eventos.</p>
         <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
         <p style="color:#888;font-size:12px">Recibes este correo por solicitud en tu cuenta.</p></div>"""
 
     from app.services.email_service import enviar_correo
     try:
-        await enviar_correo(validos, f"LiciTrackGT: {len(rows)} licitaciones - {titulo_filtro[:50]}",
+        await enviar_correo(validos, f"LiciTrackGT: {len(rows)} eventos - {titulo_filtro[:50]}",
                             html, (f"licitaciones_{f.anio or 'todos'}_{f.mes or 'todos'}.xlsx",
                                    xlsx_bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     except Exception as e:

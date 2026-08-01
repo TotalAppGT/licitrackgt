@@ -10,6 +10,7 @@ import Pipeline from './pages/Pipeline'
 import AdminPanel from './pages/AdminPanel'
 import Onboarding from './pages/Onboarding'
 import Equipo from './pages/Equipo'
+import EventoDetalle from './pages/EventoDetalle'
 
 function CountdownDisplay() {
   const [next, setNext] = useState<number | null>(null)
@@ -48,10 +49,15 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass] = useState('')
+  const [eventoNog, setEventoNog] = useState<string | null>(null)
 
   useEffect(() => {
     if (user && !localStorage.getItem('onboarding_done')) {
       setShowOnboarding(true)
+    }
+    if (window.location.pathname.startsWith('/e/')) {
+      const nog = window.location.pathname.split('/e/')[1]
+      if (nog) setEventoNog(decodeURIComponent(nog))
     }
   }, [user])
 
@@ -209,6 +215,7 @@ function AppContent() {
         </div>
       )}
       {showOnboarding && <Onboarding onComplete={() => { setShowOnboarding(false); localStorage.setItem('onboarding_done', '1') }} />}
+      {eventoNog && <EventoDetalle nog={eventoNog} onClose={() => { setEventoNog(null); window.history.pushState({}, '', '/') }} />}
     </div>
   )
 }

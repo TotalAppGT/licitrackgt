@@ -39,7 +39,7 @@ export default function AdminPanel() {
         <StatCard label="Usuarios" value={stats.total_users} color="blue" />
         <StatCard label="Pagos activos" value={stats.paying_users} color="green" />
         <StatCard label="MRR" value={`Q${(stats.mrr || 0).toLocaleString()}`} color="amber" />
-        <StatCard label="Licitaciones" value={(stats.total_licitaciones || 0).toLocaleString()} color="purple" />
+        <StatCard label="Eventos" value={(stats.total_licitaciones || 0).toLocaleString()} color="purple" />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-8">

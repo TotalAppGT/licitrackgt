@@ -59,7 +59,7 @@ export default function Pipeline() {
   }
 
   const eliminar = async (id: number) => {
-    if (!confirm('Eliminar esta licitacion del pipeline?')) return
+    if (!confirm('Eliminar este evento del pipeline?')) return
     try { await api.deletePipeline(id); cargar() } catch (e: any) { toast.show(e.message, 'error') }
   }
 
@@ -69,16 +69,16 @@ export default function Pipeline() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <h4 className="font-semibold text-sm text-gray-600 mb-3 uppercase tracking-wide">¿Cómo funciona?</h4>
           <div className="text-xs text-gray-500 space-y-2">
-            <p><b>Etapas:</b> mueve cada licitación según su avance: Detección → Análisis → Preparación → Presentación → Adjudicación.</p>
+            <p><b>Etapas:</b> mueve cada evento según su avance: Detección → Análisis → Preparación → Presentación → Adjudicación.</p>
             <p><b>Fecha de presentación:</b> cuándo debes entregar tu oferta. El sistema te avisa 3 días antes por correo y WhatsApp.</p>
             <p><b>Probabilidad:</b> qué tan probable crees que es ganar (0-100%). Te ayuda a priorizar.</p>
             <p><b>Monto propuesto:</b> cuánto planeas ofertar.</p>
           </div>
           <button onClick={() => setShowAdd(true)}
             className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition text-sm">
-            + Agregar licitación
+            + Agregar evento
           </button>
-          <p className="text-xs text-gray-400 mt-2">{items.length} / {limite} licitaciones</p>
+          <p className="text-xs text-gray-400 mt-2">{items.length} / {limite} eventos</p>
 
           <div className="mt-4 space-y-1">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Próximas a vencer</p>
@@ -112,7 +112,7 @@ export default function Pipeline() {
           <div className="divide-y">
             {items.length === 0 ? (
               <div className="text-center py-20 text-gray-400 text-sm">
-                Agrega licitaciones desde Filtros para hacerles seguimiento aquí.
+                Agrega eventos desde Filtros para hacerles seguimiento aquí.
               </div>
             ) : items.map(item => {
               const dias = diasFaltan(item.fecha_presentacion)

@@ -80,7 +80,7 @@ export default function Alertas() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-gray-800">Palabras Clave</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Detectan licitaciones por coincidencia en el título</p>
+              <p className="text-xs text-gray-400 mt-0.5">Detectan eventos por coincidencia en el título</p>
             </div>
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${alerts.length >= limite ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
               {alerts.length} / {limite}
@@ -219,7 +219,7 @@ export default function Alertas() {
           <ReportesProgramados />
           <hr className="my-4" />
           <div className="text-xs text-gray-500 space-y-2">
-            <p><b>Palabras clave:</b> detectan licitaciones por coincidencia en el título.</p>
+            <p><b>Palabras clave:</b> detectan eventos por coincidencia en el título.</p>
             <p><b>Frecuencia:</b> cada cuánto se revisan coincidencias (15 min a 1 día).</p>
             <p><b>Prueba:</b> haz clic en Probar para recibir un mensaje de prueba al instante.</p>
             <p className="text-blue-600 font-medium">Plan {alerts.length >= limite ? 'agotado' : 'activo'}: {alerts.length} de {limite} palabras clave.</p>

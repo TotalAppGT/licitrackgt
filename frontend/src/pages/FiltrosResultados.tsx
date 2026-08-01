@@ -64,7 +64,7 @@ export default function FiltrosResultados() {
         ok++
       } catch { /* skip duplicates */ }
     }
-    toast.show(`${ok} licitaciones agregadas al seguimiento`, 'success')
+    toast.show(`${ok} eventos agregadas al seguimiento`, 'success')
     setSelected(new Set())
   }
 
@@ -152,7 +152,7 @@ export default function FiltrosResultados() {
               </div>
             </div>
             <button onClick={() => search()} className="w-full bg-[#1a3a5c] text-white py-2 rounded-lg font-medium hover:bg-[#2b579a] transition">
-              {loading ? 'Buscando licitaciones...' : 'Buscar licitaciones'}
+              {loading ? 'Buscando eventos...' : 'Buscar eventos'}
             </button>
             <button onClick={() => { setFilters({}); setResults(null); setPage(1) }}
               className="w-full text-sm text-gray-500 border border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">

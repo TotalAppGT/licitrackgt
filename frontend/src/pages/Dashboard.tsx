@@ -17,7 +17,7 @@ export default function Dashboard() {
   if (!stats) return <div className="text-center py-20 text-gray-400">Sin datos</div>
 
   const cards = [
-    { label: 'Total de licitaciones', value: stats.total.toLocaleString(), color: '#1a3a5c' },
+    { label: 'Total de eventos', value: stats.total.toLocaleString(), color: '#1a3a5c' },
     { label: 'Entidades', value: stats.entidades.toLocaleString(), color: '#2b579a' },
     { label: 'Monto promedio', value: 'Q' + Math.round(stats.monto_prom).toLocaleString(), color: '#27ae60' },
     { label: 'En 2026', value: stats.total_2026.toLocaleString(), color: '#e67e22' },
@@ -39,7 +39,7 @@ export default function Dashboard() {
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-4">Licitaciones por mes 2026</h3>
+          <h3 className="font-bold text-gray-800 mb-4">Eventos por mes 2026</h3>
           <div className="flex items-end gap-2 h-40">
             {stats.por_mes.map(m => (
               <div key={m.mes} className="flex-1 flex flex-col items-center gap-1">

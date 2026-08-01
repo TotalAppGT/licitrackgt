@@ -9,18 +9,18 @@ const PLANES = [
     badge: '',
     features: [
       { text: '5 palabras clave', icon: 'search' },
-      { text: 'Busqueda en 1.7M+ licitaciones', icon: 'database' },
+      { text: 'Busqueda en 1.7M+ eventos', icon: 'database' },
       { text: 'Dashboard con graficos', icon: 'chart' },
       { text: 'Filtros avanzados tipo Guatecompras', icon: 'filter' },
     ],
-    nope: ['Pipeline de licitaciones', 'Reportes programados', 'Alertas por correo', 'Export XLSX', 'Envio multi-correo'],
+    nope: ['Pipeline de eventos', 'Reportes programados', 'Alertas por correo', 'Export XLSX', 'Envio multi-correo'],
   },
   {
     id: 'basico', name: 'Basico', price: 349, color: 'blue',
     badge: '',
     features: [
       { text: '10 palabras clave + alertas', icon: 'bell' },
-      { text: '3 licitaciones en Pipeline', icon: 'trello' },
+      { text: '3 eventos en Pipeline', icon: 'trello' },
       { text: '1 reporte programado', icon: 'clock' },
       { text: 'Export CSV con streaming', icon: 'download' },
       { text: 'Envio de resultados por correo', icon: 'mail' },
@@ -34,7 +34,7 @@ const PLANES = [
     badge: 'MAS POPULAR',
     features: [
       { text: '50 palabras clave + alertas programables', icon: 'bell' },
-      { text: '30 licitaciones en Pipeline con etapas', icon: 'trello' },
+      { text: '30 eventos en Pipeline con etapas', icon: 'trello' },
       { text: '5 reportes programados multi-destinatario', icon: 'clock' },
       { text: 'Export XLSX profesional con formato', icon: 'file' },
       { text: 'Alertas automaticas cada 15 min', icon: 'zap' },

@@ -1,4 +1,4 @@
-import httpx
+﻿import httpx
 from datetime import date, datetime, timedelta
 from app.database import async_session
 from app.models import Licitacion, ExtractionLog, KeywordAlert, ScheduledReport, PipelineItem, User
@@ -141,11 +141,11 @@ async def procesar_alertas():
                                     "monto": r.monto or 0, "fecha": str(r.fecha_publicacion or "")})
             if matches:
                 lista = "".join(
-                    f'<li><b>{m["keyword"]}</b> - <a href="https://guatecompras.gt/procesos/{m["nog"]}">{m["titulo"]}</a> - Q{float(m["monto"]):,.0f} ({m["fecha"]})</li>'
+                    f'<li><b>{m["keyword"]}</b> - <a href="{settings.FRONTEND_URL}/e/{m["nog"]}">{m["titulo"]}</a> - Q{float(m["monto"]):,.0f} ({m["fecha"]})</li>'
                     for m in matches[:50])
                 html = f"""<div style="font-family:Arial;max-width:600px;margin:auto">
                     <h2 style="color:#1a3a5c">LiciTrackGT - {len(matches)} alertas{hora_str}</h2>
-                    <p>Nuevas licitaciones que coinciden con tus keywords:</p>
+                    <p>Nuevas eventos que coinciden con tus keywords:</p>
                     <ul>{lista}</ul>
                     <p><a href="{settings.FRONTEND_URL}">Abrir LiciTrackGT</a></p>
                     <p style="color:#888;font-size:12px">Para dejar de recibir alertas, elimina la keyword en tu panel.</p></div>"""
@@ -211,7 +211,7 @@ async def procesar_scheduled_reports():
                         r.estado or "", r.categoria or "", r.metodo or "", r.modalidad or "", r.departamento or ""]
             wb = Workbook()
             ws = wb.active
-            ws.title = "Licitaciones"
+            ws.title = "Eventos"
             hfill = PatternFill("solid", fgColor="1A3A5C")
             hfont = Font(color="FFFFFF", bold=True)
             ws.append(headers)
@@ -230,7 +230,7 @@ async def procesar_scheduled_reports():
             keyword_text = rep.keywords or "sin filtro"
             html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
                 <h2 style="color:#1a3a5c">LiciTrackGT - Reporte programado</h2>
-                <p><b>{len(rows)} licitaciones</b> para: {keyword_text}</p>
+                <p><b>{len(rows)} eventos</b> para: {keyword_text}</p>
                 <p style="margin:16px 0">Adjunto: <b>XLSX</b> con el detalle completo.</p>
                 <p><a href="{settings.FRONTEND_URL}" style="background:#1a3a5c;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none">Abrir LiciTrackGT</a></p>
                 <p style="color:#888;font-size:12px">Reporte programado desde tu cuenta. Puedes desactivarlo en Alertas.</p></div>"""
@@ -247,7 +247,7 @@ async def procesar_scheduled_reports():
             if user.whatsapp_phone:
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          f"LiciTrackGT Reporte: {len(rows)} licitaciones para '{keyword_text[:40]}'\nAdjunto XLSX en tu correo.\n{settings.FRONTEND_URL}")
+                                          f"LiciTrackGT Reporte: {len(rows)} eventos para '{keyword_text[:40]}'\nAdjunto XLSX en tu correo.\n{settings.FRONTEND_URL}")
                 except Exception as e:
                     print(f"Error WhatsApp reporte id={rep.id}: {e}")
 
@@ -275,7 +275,7 @@ async def procesar_deadline_alerts():
             html = f"""<div style="font-family:Arial;max-width:600px;margin:auto;color:#222">
                 <h2 style="color:#c00">LiciTrackGT - Recordatorio de presentacion</h2>
                 <p style="font-size:16px"><b>{p.titulo}</b></p>
-                <p>NOG: <a href="https://guatecompras.gt/procesos/{p.nog}">{p.nog}</a></p>
+                <p>NOG: <a href="{settings.FRONTEND_URL}/e/{p.nog}">{p.nog}</a></p>
                 <p>Fecha de presentacion: <b style="color:#c00">{p.fecha_presentacion}</b> ({label})</p>
                 <p>Entidad: {p.entidad or 'N/A'} | Etapa: {p.etapa}</p>
                 {f'<p>Monto propuesto: Q{float(p.monto_propuesto or 0):,.0f}</p>' if p.monto_propuesto else ''}
@@ -290,7 +290,7 @@ async def procesar_deadline_alerts():
             if user.whatsapp_phone:
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          f"LiciTrackGT: Presentacion en {label}\n{p.titulo[:80]}\nNOG: {p.nog}\nEntidad: {p.entidad or 'N/A'}\nVer: https://guatecompras.gt/procesos/{p.nog}")
+                                          f"LiciTrackGT: Presentacion en {label}\n{p.titulo[:80]}\nNOG: {p.nog}\nEntidad: {p.entidad or 'N/A'}\nVer: {settings.FRONTEND_URL}/e/{p.nog}")
                 except Exception as e:
                     print(f"Error deadline alert whatsapp {user.email}: {e}")
 

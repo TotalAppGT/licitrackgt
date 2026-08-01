@@ -8,8 +8,8 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [testResult, setTestResult] = useState<any>(null)
 
   const steps = [
-    { title: 'Bienvenido a LiciTrackGT', desc: 'Monitoreo inteligente de licitaciones de Guatecompras. Te guiaremos en 2 pasos para dejarlo todo listo.' },
-    { title: 'Configura tus notificaciones', desc: 'Recibe alertas por correo y WhatsApp cuando haya nuevas licitaciones.' },
+    { title: 'Bienvenido a LiciTrackGT', desc: 'Monitoreo inteligente de eventos de Guatecompras. Te guiaremos en 2 pasos para dejarlo todo listo.' },
+    { title: 'Configura tus notificaciones', desc: 'Recibe alertas por correo y WhatsApp cuando haya nuevas eventos.' },
   ]
 
   const probar = async () => {
@@ -54,7 +54,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
             <div className="grid grid-cols-3 gap-3 mt-6 text-sm">
               <div className="bg-blue-50 rounded-xl p-4">
                 <div className="text-2xl mb-1">1.7M+</div>
-                <div className="text-gray-500 text-xs">Licitaciones</div>
+                <div className="text-gray-500 text-xs">Eventos</div>
               </div>
               <div className="bg-green-50 rounded-xl p-4">
                 <div className="text-2xl mb-1">15min</div>

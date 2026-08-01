@@ -48,7 +48,7 @@ export default function Login() {
   }
 
   const planes = [
-    { name: 'Explorador', precio: 'Gratis', color: 'gray', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ licitaciones', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
+    { name: 'Explorador', precio: 'Gratis', color: 'gray', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ eventos', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
     { name: 'Básico', precio: 'Q349', color: 'blue', desc: 'Alertas y exportación', features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'], cta: 'Elegir Básico' },
     { name: 'Pro', precio: 'Q599', color: 'navy', desc: 'Completo para empresas', popular: true, features: ['50 palabras clave', '30 seguimientos', '5 reportes programados', 'WhatsApp + Correo', 'Export XLSX profesional', 'Hasta 3 usuarios'], cta: 'Elegir Pro' },
     { name: 'Enterprise', precio: 'Q999', color: 'amber', desc: 'Para equipos grandes', features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp prioritario', 'API acceso', '10 usuarios', 'Soporte dedicado'], cta: 'Elegir Enterprise' },
@@ -69,7 +69,7 @@ export default function Login() {
           <button onClick={() => setView('landing')} className="text-sm text-gray-400 hover:text-gray-600 mb-4">&larr; Volver</button>
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">{isReg ? 'Crear cuenta gratis' : 'Iniciar sesión'}</h2>
-            <p className="text-gray-400 text-sm mt-1">{isReg ? 'Accede a 1.7M+ licitaciones' : 'Continúa donde lo dejaste'}</p>
+            <p className="text-gray-400 text-sm mt-1">{isReg ? 'Accede a 1.7M+ eventos' : 'Continúa donde lo dejaste'}</p>
           </div>
           <form onSubmit={e => { e.preventDefault(); handleAuth(isReg) }} className="space-y-3">
             {isReg && <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm" required />}
@@ -105,7 +105,7 @@ export default function Login() {
             Encuentra oportunidades<br />en <span className="text-cyan-400">Guatecompras</span> al instante
           </h1>
           <p className="text-white/60 mt-4 text-lg max-w-2xl mx-auto">
-            Monitoreo inteligente de licitaciones. Alertas por WhatsApp y correo. Pipeline de seguimiento. Todo en un solo lugar.
+            Monitoreo inteligente de eventos. Alertas por WhatsApp y correo. Pipeline de seguimiento. Todo en un solo lugar.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-8">
             <button onClick={() => setView('register')}
@@ -118,7 +118,7 @@ export default function Login() {
             </button>
           </div>
           <div className="flex flex-wrap gap-6 justify-center mt-10 text-sm text-white/40">
-            <span>✓ 1.7M+ licitaciones</span>
+            <span>✓ 1.7M+ eventos</span>
             <span>✓ Sin tarjeta de crédito</span>
             <span>✓ Acceso inmediato</span>
           </div>
