@@ -1,8 +1,8 @@
+import re
 import httpx
 from app.config import settings
 
 WHATSAPP_API = "https://graph.facebook.com/v22.0"
-
 
 WHATSAPP_TEMPLATE = "alerta_totalappgt"
 WHATSAPP_TEMPLATE_LANG = "es_MX"
@@ -10,7 +10,8 @@ WHATSAPP_TEMPLATE_FOOTER = "TotalAppGT"
 
 
 def _limpiar(texto: str) -> str:
-    t = (texto or "").strip()
+    t = re.sub(r"[\t\n\r]+", " ", (texto or "").strip())
+    t = re.sub(r" {4,}", "  ", t)
     if len(t) > 900:
         t = t[:897] + "..."
     return t
@@ -24,8 +25,8 @@ def texto_alerta_prueba() -> str:
 def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
     cabecera = f"ALERTA DE EVENTOS - {n} nueva(s) coincidencia(s){hora_str}:"
-    lineas = [f"  {m['keyword']}: {m['titulo'][:55]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:8]]
-    return cabecera + "\n" + "\n".join(lineas)
+    partes = [f"{m['keyword']}: {m['titulo'][:55]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:8]]
+    return cabecera + "  |  ".join(partes)
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
