@@ -156,10 +156,8 @@ async def procesar_alertas():
                 except Exception as e:
                     print(f"Error alerta para {u.email}: {e}")
                 if u.whatsapp_phone:
-                    wa_text = f"LiciTrackGT: {len(matches)} coincidencias{hora_str}\n" + "\n".join(
-                        f"  {m['keyword']}: {m['titulo'][:60]} Q{float(m['monto']):,.0f}"
-                        for m in matches[:10]
-                    ) + f"\n\nVer mas: {settings.FRONTEND_URL}"
+                    from app.services.whatsapp_service import texto_alerta_matches
+                    wa_text = texto_alerta_matches(matches, hora_str)
                     try:
                         await enviar_whatsapp(u.whatsapp_phone, wa_text)
                     except Exception as e:
@@ -245,9 +243,10 @@ async def procesar_scheduled_reports():
             except Exception as e:
                 print(f"Error reporte programado id={rep.id}: {e}")
             if user.whatsapp_phone:
+                from app.services.whatsapp_service import texto_reporte_programado
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          f"LiciTrackGT Reporte: {len(rows)} eventos para '{keyword_text[:40]}'\nAdjunto XLSX en tu correo.\n{settings.FRONTEND_URL}")
+                                          texto_reporte_programado(len(rows), keyword_text))
                 except Exception as e:
                     print(f"Error WhatsApp reporte id={rep.id}: {e}")
 
@@ -288,9 +287,10 @@ async def procesar_deadline_alerts():
             except Exception as e:
                 print(f"Error deadline alert email {user.email}: {e}")
             if user.whatsapp_phone:
+                from app.services.whatsapp_service import texto_deadline
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          f"LiciTrackGT: Presentacion en {label}\n{p.titulo[:80]}\nNOG: {p.nog}\nEntidad: {p.entidad or 'N/A'}\nVer: {settings.FRONTEND_URL}/e/{p.nog}")
+                                          texto_deadline(label, p.titulo, p.nog, p.entidad, p.monto_propuesto))
                 except Exception as e:
                     print(f"Error deadline alert whatsapp {user.email}: {e}")
 

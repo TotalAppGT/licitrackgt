@@ -182,10 +182,8 @@ async def test_notification(req: TestNotificationRequest, user: User = Depends(g
     phone = req.whatsapp_phone or user.whatsapp_phone
     if phone:
         try:
-            ok = await enviar_whatsapp(phone,
-                "LiciTrackGT - Prueba de WhatsApp\n\n"
-                "Este es un mensaje de prueba para confirmar que recibiras tus alertas por aqui.\n\n"
-                "Cuando haya nuevas eventos que coincidan con tus keywords, te llegara un aviso como este.")
+            from app.services.whatsapp_service import texto_alerta_prueba
+            ok = await enviar_whatsapp(phone, texto_alerta_prueba())
             result["whatsapp"] = ok
             if not ok:
                 result["whatsapp_error"] = "No se pudo enviar (verifica token/nÃºmero)"
@@ -638,7 +636,10 @@ async def test_alerta(alert_id: int, user: User = Depends(get_current_user), db:
         result["error"] = str(e)[:100]
     if user.whatsapp_phone:
         try:
-            wa_text = f"LiciTrackGT - Prueba\n\n{alert.keyword}: {len(rows)} coincidencias\n" + "\n".join(f"  {r.titulo[:60]}" for r in rows[:5])
+            from app.services.whatsapp_service import texto_alerta_matches
+            wa_text = ("PRUEBA DE ALERTA\n\n"
+                       + texto_alerta_matches([{"keyword": alert.keyword, "titulo": r.titulo, "monto": r.monto}
+                                               for r in rows[:8]]))
             ok = await enviar_whatsapp(user.whatsapp_phone, wa_text)
             result["whatsapp"] = ok
         except Exception as e:

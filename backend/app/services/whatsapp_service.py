@@ -9,12 +9,41 @@ WHATSAPP_TEMPLATE_LANG = "es_MX"
 WHATSAPP_TEMPLATE_FOOTER = "TotalAppGT"
 
 
+def _limpiar(texto: str) -> str:
+    t = (texto or "").strip()
+    if len(t) > 900:
+        t = t[:897] + "..."
+    return t
+
+
+def texto_alerta_prueba() -> str:
+    return ("PRUEBA DE NOTIFICACION - Tu numero de WhatsApp quedo vinculado correctamente. "
+            "Cuando haya nuevos eventos que coincidan con tus keywords, recibiras un aviso como este.")
+
+
+def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
+    n = len(matches)
+    cabecera = f"ALERTA DE EVENTOS - {n} nueva(s) coincidencia(s){hora_str}:"
+    lineas = [f"  {m['keyword']}: {m['titulo'][:55]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:8]]
+    return cabecera + "\n" + "\n".join(lineas)
+
+
+def texto_reporte_programado(total: int, keyword_text: str) -> str:
+    return (f"REPORTE PROGRAMADO - {total} eventos para '{keyword_text[:40]}'. "
+            "El detalle completo (XLSX) fue enviado a tu correo.")
+
+
+def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
+    s = f"RECORDATORIO DE PRESENTACION - {label}: {titulo[:60]} | NOG: {nog} | Entidad: {entidad or 'N/A'}"
+    if monto:
+        s += f" | Monto: Q{float(monto):,.0f}"
+    return s
+
+
 async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
     if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
         return False
-    texto = (mensaje or "").strip().replace("\n", " ")
-    if len(texto) > 900:
-        texto = texto[:897] + "..."
+    texto = _limpiar(mensaje)
     try:
         async with httpx.AsyncClient(timeout=20) as cl:
             resp = await cl.post(
