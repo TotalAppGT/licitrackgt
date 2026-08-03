@@ -25,6 +25,7 @@ def _limpiar(texto: str) -> str:
 def texto_alerta_prueba() -> str:
     return ("Vinculacion exitosa. "
             "Recibiras tus alertas de eventos, reportes programados y recordatorios de vencimientos en esta conversacion. "
+            "Ingresa al sistema para configurar tus keywords y alertas: licitrackgt.totalappgt.online "
             "\u2014 LiciTrackGT")
 
 
@@ -32,12 +33,13 @@ def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
     cab = f"ALERTA  |  {n} eventos nuevos{hora_str}"
     partes = [f"{m['keyword']}: {m['titulo'][:45]} \u2014 Q{float(m['monto'] or 0):,.0f}" for m in matches[:6]]
-    return cab + "  |  " + "  |  ".join(partes) + "  \u2014 LiciTrackGT"
+    return cab + "  |  " + "  |  ".join(partes) + "  |  licitrackgt.totalappgt.online  \u2014 LiciTrackGT"
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
     return (f"REPORTE  |  {total:,} eventos exportados para '{keyword_text[:35]}'  |  "
-            "Archivo XLSX enviado a tu correo  \u2014 LiciTrackGT")
+            "Archivo XLSX enviado a tu correo  |  "
+            "Revisa el detalle en: licitrackgt.totalappgt.online  \u2014 LiciTrackGT")
 
 
 def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
@@ -46,7 +48,7 @@ def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) 
          f"NOG: {nog}  |  Entidad: {entidad or 'N/A'}")
     if monto:
         s += f"  |  Monto: Q{float(monto):,.0f}"
-    return s + "  \u2014 LiciTrackGT"
+    return s + "  |  licitrackgt.totalappgt.online  \u2014 LiciTrackGT"
 
 
 async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "\U0001f44b") -> bool:
