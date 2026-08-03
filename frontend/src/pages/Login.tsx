@@ -365,33 +365,28 @@ export default function Login() {
       {/* FOOTER */}
       <footer className="bg-[#0d2137] text-white">
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             <div>
-              <div className="flex items-center gap-3 mb-3">
-                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="h-8 w-8 rounded-lg object-cover" />
-                <div>
-                  <div className="flex items-center gap-2 text-lg font-extrabold">
-                    <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    LiciTrack<span className="text-cyan-400">GT</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <svg className="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                <span className="font-bold text-white text-lg">LiciTrack<span className="text-cyan-400">GT</span></span>
               </div>
-              <p className="text-sm text-white/50 leading-relaxed max-w-xs">Monitoreo inteligente de Guatecompras. Alertas en tiempo real, pipeline de seguimiento y reportes profesionales para tu empresa.</p>
+              <p className="text-sm text-white/50 leading-relaxed">Monitoreo inteligente de Guatecompras. Alertas en tiempo real, pipeline de seguimiento y reportes profesionales para tu empresa.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Enlaces</h4>
+              <h4 className="font-semibold text-sm mb-3 text-white/80">Enlaces</h4>
               <ul className="space-y-2 text-sm text-white/50">
-                <li><button onClick={() => navigateToLegal('terminos')} className="hover:text-white transition text-left">Términos y Condiciones</button></li>
-                <li><button onClick={() => navigateToLegal('privacidad')} className="hover:text-white transition text-left">Política de Privacidad</button></li>
-                <li><a href="https://wa.me/50258303182" target="_blank" rel="noopener" className="hover:text-white transition">Soporte WhatsApp</a></li>
-                <li><a href="mailto:soporte@totalappgt.online" className="hover:text-white transition">soporte@totalappgt.online</a></li>
+                <li><button onClick={() => navigateToLegal('terminos')} className="hover:text-cyan-400 transition text-left">Términos y Condiciones</button></li>
+                <li><button onClick={() => navigateToLegal('privacidad')} className="hover:text-cyan-400 transition text-left">Política de Privacidad</button></li>
+                <li><a href="https://wa.me/50258303182" target="_blank" rel="noopener" className="hover:text-cyan-400 transition">Soporte WhatsApp</a></li>
+                <li><a href="mailto:soporte@totalappgt.online" className="hover:text-cyan-400 transition">soporte@totalappgt.online</a></li>
               </ul>
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-12 h-12 rounded-xl object-cover shadow-lg" />
-                <div>
-                  <div className="font-bold text-base text-white">TotalApp<span className="text-cyan-400">GT</span></div>
+            <div className="md:text-right">
+              <div className="inline-flex items-center gap-3 mb-3">
+                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-10 h-10 rounded-lg object-cover ring-1 ring-white/10" />
+                <div className="text-left">
+                  <div className="font-bold text-white">TotalApp<span className="text-cyan-400">GT</span></div>
                   <div className="text-xs text-white/40">Soluciones inteligentes</div>
                 </div>
               </div>
@@ -400,8 +395,8 @@ export default function Login() {
               </p>
             </div>
           </div>
-          <hr className="border-white/10 mb-6" />
-          <p className="text-center text-xs text-white/30">
+          <hr className="border-white/10" />
+          <p className="text-center text-xs text-white/30 mt-6">
             &copy; {new Date().getFullYear()} TotalAppGT. Todos los derechos reservados.
           </p>
         </div>
