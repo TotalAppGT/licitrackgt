@@ -23,34 +23,32 @@ def _limpiar(texto: str) -> str:
 
 
 def texto_alerta_prueba() -> str:
-    return ("tu WhatsApp ha sido vinculado correctamente. "
-            "A partir de ahora recibiras aqui tus alertas de eventos, reportes programados y recordatorios de vencimientos. "
-            "-- LiciTrackGT")
+    return ("Tu WhatsApp ha sido vinculado correctamente. "
+            "A partir de ahora recibiras aqui tus alertas de eventos, reportes programados y recordatorios de vencimientos.")
 
 
 def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
-    cab = f"ALERTA DE EVENTOS: {n} nuevo(s){hora_str}"
+    cab = f"ALERTA -- {n} evento(s) nuevo(s){hora_str}"
     partes = [f"{m['keyword']}: {m['titulo'][:50]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:5]]
-    return cab + "  |  " + "  |  ".join(partes) + "  -- LiciTrackGT"
+    return cab + "  |  " + "  |  ".join(partes)
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
-    return (f"REPORTE LISTO: {total} eventos exportados para '{keyword_text[:35]}'. "
-            "El archivo XLSX completo fue enviado a tu correo electronico. "
-            "-- LiciTrackGT")
+    return (f"REPORTE -- {total} eventos exportados para "
+            f"'{keyword_text[:35]}'. El archivo XLSX completo fue enviado a tu correo electronico.")
 
 
 def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
     pref = "HOY" if label.upper() == "HOY" else f"en {label}"
-    s = (f"RECORDATORIO: vence {pref}: {titulo[:55]}. "
+    s = (f"RECORDATORIO -- Vence {pref}: {titulo[:55]}. "
          f"| NOG: {nog} | Entidad: {entidad or 'N/A'}")
     if monto:
         s += f" | Monto: Q{float(monto):,.0f}"
-    return s + "  -- LiciTrackGT"
+    return s
 
 
-async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "Usuario") -> bool:
+async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "LiciTrackGT") -> bool:
     if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
         return False
     nombre = _limpiar(nombre_usuario or "Usuario")

@@ -159,7 +159,7 @@ async def procesar_alertas():
                     from app.services.whatsapp_service import texto_alerta_matches
                     wa_text = texto_alerta_matches(matches, hora_str)
                     try:
-                        await enviar_whatsapp(u.whatsapp_phone, wa_text, u.name or u.email.split("@")[0])
+                        await enviar_whatsapp(u.whatsapp_phone, wa_text)
                     except Exception as e:
                         print(f"Error WhatsApp para {u.email}: {e}")
         for a in alerts_to_update:

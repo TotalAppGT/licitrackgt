@@ -218,13 +218,10 @@ export default function Login() {
       {/* HERO */}
       <div className="bg-gradient-to-br from-[#0d2137] via-[#112a47] to-[#1a3a5c] text-white">
         <header className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="h-8 w-8 rounded-lg object-cover" />
-            <div className="flex items-center gap-2 text-lg font-extrabold tracking-wider">
+          <div className="flex items-center gap-2 text-lg font-extrabold tracking-wider">
             <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             LiciTrack<span className="text-cyan-400">GT</span>
             </div>
-          </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setView('login')} className="text-sm text-white/60 hover:text-white transition">Iniciar sesión</button>
             <button onClick={() => setView('register')} className="text-sm bg-cyan-400 text-black px-4 py-2 rounded-lg font-semibold hover:bg-cyan-300 transition">Probar gratis</button>
@@ -383,8 +380,8 @@ export default function Login() {
               </ul>
             </div>
             <div className="md:text-right">
-              <div className="inline-flex items-center gap-3 mb-3">
-                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-10 h-10 rounded-lg object-cover ring-1 ring-white/10" />
+              <div className="inline-flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-cyan-400 rounded-lg flex items-center justify-center text-black font-extrabold text-sm">TA</div>
                 <div className="text-left">
                   <div className="font-bold text-white">TotalApp<span className="text-cyan-400">GT</span></div>
                   <div className="text-xs text-white/40">Soluciones inteligentes</div>
