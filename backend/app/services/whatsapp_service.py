@@ -8,46 +8,49 @@ PROXY_URL = "https://webhook-meta-production-bb93.up.railway.app"
 PROXY_API_KEY = "proxy_master_2026_secret"
 LICITRACK_SYSTEM_ID = "b24abb0a"
 
-WHATSAPP_TEMPLATE = "alerta_totalappgt"
+WHATSAPP_TEMPLATE = "notificacion_sistema_ia"
 WHATSAPP_TEMPLATE_LANG = "es_MX"
 WHATSAPP_TEMPLATE_FOOTER = "TotalAppGT"
+
+SISTEMA_NOMBRE = "LiciTrackGT"
 
 
 def _limpiar(texto: str) -> str:
     t = re.sub(r"[\t\n\r]+", " ", (texto or "").strip())
     t = re.sub(r" {4,}", "  ", t)
-    if len(t) > 900:
-        t = t[:897] + "..."
+    if len(t) > 800:
+        t = t[:797] + "..."
     return t
 
 
 def texto_alerta_prueba() -> str:
-    return ("PRUEBA DE NOTIFICACION - Tu numero de WhatsApp quedo vinculado correctamente. "
-            "Cuando haya nuevos eventos que coincidan con tus keywords, recibiras un aviso como este.")
+    return (SISTEMA_NOMBRE + ": PRUEBA - Tu numero de WhatsApp quedo vinculado correctamente. "
+            "Recibiras alertas cuando haya nuevos eventos que coincidan con tus keywords.")
 
 
 def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
-    cabecera = f"ALERTA DE EVENTOS - {n} nueva(s) coincidencia(s){hora_str}:"
-    partes = [f"{m['keyword']}: {m['titulo'][:55]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:8]]
-    return cabecera + "  |  ".join(partes)
+    cabecera = f"{SISTEMA_NOMBRE}: {n} evento(s) nuevo(s){hora_str}"
+    partes = [f"{m['keyword']}: {m['titulo'][:50]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:6]]
+    return cabecera + "  |  " + "  |  ".join(partes)
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
-    return (f"REPORTE PROGRAMADO - {total} eventos para '{keyword_text[:40]}'. "
-            "El detalle completo (XLSX) fue enviado a tu correo.")
+    return (f"{SISTEMA_NOMBRE}: REPORTE - {total} eventos para '{keyword_text[:35]}'. "
+            "Archivo XLSX enviado a tu correo.")
 
 
 def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
-    s = f"RECORDATORIO DE PRESENTACION - {label}: {titulo[:60]} | NOG: {nog} | Entidad: {entidad or 'N/A'}"
+    s = f"{SISTEMA_NOMBRE}: VENCE {label.upper()} - {titulo[:55]} | NOG: {nog} | Entidad: {entidad or 'N/A'}"
     if monto:
         s += f" | Monto: Q{float(monto):,.0f}"
     return s
 
 
-async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
+async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "Usuario") -> bool:
     if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
         return False
+    nombre = _limpiar(nombre_usuario or "Usuario")
     texto = _limpiar(mensaje)
     try:
         async with httpx.AsyncClient(timeout=20) as cl:
@@ -65,7 +68,10 @@ async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
                         "language": {"code": WHATSAPP_TEMPLATE_LANG},
                         "components": [
                             {"type": "body",
-                             "parameters": [{"type": "text", "text": texto}]}
+                             "parameters": [
+                                 {"type": "text", "text": nombre},
+                                 {"type": "text", "text": texto},
+                             ]}
                         ],
                     },
                 },

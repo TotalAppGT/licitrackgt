@@ -159,7 +159,7 @@ async def procesar_alertas():
                     from app.services.whatsapp_service import texto_alerta_matches
                     wa_text = texto_alerta_matches(matches, hora_str)
                     try:
-                        await enviar_whatsapp(u.whatsapp_phone, wa_text)
+                        await enviar_whatsapp(u.whatsapp_phone, wa_text, u.name or u.email.split("@")[0])
                     except Exception as e:
                         print(f"Error WhatsApp para {u.email}: {e}")
         for a in alerts_to_update:
@@ -246,7 +246,8 @@ async def procesar_scheduled_reports():
                 from app.services.whatsapp_service import texto_reporte_programado
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          texto_reporte_programado(len(rows), keyword_text))
+                                          texto_reporte_programado(len(rows), keyword_text),
+                                          user.name or user.email.split("@")[0])
                 except Exception as e:
                     print(f"Error WhatsApp reporte id={rep.id}: {e}")
 
@@ -290,7 +291,8 @@ async def procesar_deadline_alerts():
                 from app.services.whatsapp_service import texto_deadline
                 try:
                     await enviar_whatsapp(user.whatsapp_phone,
-                                          texto_deadline(label, p.titulo, p.nog, p.entidad, p.monto_propuesto))
+                                          texto_deadline(label, p.titulo, p.nog, p.entidad, p.monto_propuesto),
+                                          user.name or user.email.split("@")[0])
                 except Exception as e:
                     print(f"Error deadline alert whatsapp {user.email}: {e}")
 
