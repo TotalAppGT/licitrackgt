@@ -10,7 +10,6 @@ LICITRACK_SYSTEM_ID = "b24abb0a"
 
 WHATSAPP_TEMPLATE = "notificacion_sistema_ia"
 WHATSAPP_TEMPLATE_LANG = "es_MX"
-WHATSAPP_TEMPLATE_FOOTER = "TotalAppGT"
 
 SISTEMA_NOMBRE = "LiciTrackGT"
 
@@ -96,10 +95,10 @@ def verificar_webhook(mode: str, token: str, challenge: str) -> str | None:
     return None
 
 
-def registrar_telefono_proxy(phone: str, user_id: int) -> bool:
+async def registrar_telefono_proxy(phone: str, user_id: int) -> bool:
     try:
-        with httpx.Client(timeout=10) as cl:
-            resp = cl.post(
+        async with httpx.AsyncClient(timeout=10) as cl:
+            resp = await cl.post(
                 f"{PROXY_URL}/api/systems/register-phone",
                 json={
                     "system_id": LICITRACK_SYSTEM_ID,
@@ -108,8 +107,11 @@ def registrar_telefono_proxy(phone: str, user_id: int) -> bool:
                 },
                 headers={"X-API-Key": PROXY_API_KEY}
             )
-        print(f"Proxy registro tel {phone} usuario {user_id}: {resp.status_code} {resp.text[:150]}")
-        return resp.status_code < 400
+        ok = resp.status_code < 400
+        if ok:
+            return True
+        print(f"Proxy register-phone {phone} uid={user_id}: {resp.status_code} {resp.text[:150]}")
+        return False
     except Exception as e:
-        print(f"Proxy register-phone error: {e}")
+        print(f"Proxy register-phone error {phone}: {e}")
         return False
