@@ -30,7 +30,7 @@ Nos reservamos el derecho de modificar estos términos en cualquier momento. Los
 
 8. CONTACTO
 Email: soporte@totalappgt.online
-WhatsApp: +502 5830 9505`
+WhatsApp: +502 5830 3182`
 
 const PRIVACIDAD = `POLÍTICA DE PRIVACIDAD
 LiciTrackGT — TotalAppGT
@@ -55,7 +55,7 @@ Usamos cookies técnicas necesarias para el funcionamiento de la sesión. No usa
 
 7. CONTACTO
 Email: soporte@totalappgt.online
-WhatsApp: +502 5830 9505`
+WhatsApp: +502 5830 3182`
 
 export default function Login() {
   const { login } = useAuth()
@@ -121,10 +121,10 @@ export default function Login() {
   }
 
   const planes = [
-    { name: 'Explorador', precio: 'Gratis', color: 'slate', desc: 'Conoce el sistema', features: ['Buscar 1.7M+ eventos', '5 palabras clave', 'Dashboard con gráficos'], cta: 'Comenzar gratis' },
-    { name: 'Básico', precio: 'Q349', color: 'emerald', desc: 'Alertas y exportación', features: ['10 palabras clave + alertas', '3 seguimientos', '1 reporte programado', 'Export CSV', 'Envío por correo'], cta: 'Elegir Básico' },
-    { name: 'Pro', precio: 'Q599', color: 'navy', desc: 'Completo para empresas', popular: true, features: ['50 palabras clave', '30 seguimientos', '5 reportes programados', 'WhatsApp + Correo', 'Export XLSX profesional', 'Hasta 3 usuarios'], cta: 'Elegir Pro' },
-    { name: 'Enterprise', precio: 'Q999', color: 'violet', desc: 'Para equipos grandes', features: ['Ilimitado en todo', 'Pipeline completo', 'WhatsApp prioritario', 'API acceso', '10 usuarios', 'Soporte dedicado'], cta: 'Elegir Enterprise' },
+    { name: 'Explorador', precio: 'Gratis', color: 'slate', desc: 'Para siempre, sin costo', features: ['Explora 1.7M+ eventos públicos', '5 palabras clave de búsqueda', 'Dashboard con gráficos en vivo', 'Acceso ilimitado sin vencimiento'], cta: 'Comenzar gratis' },
+    { name: 'Básico', precio: 'Q349', color: 'emerald', desc: 'Alertas inteligentes', features: ['10 palabras clave con alertas', '3 eventos en seguimiento', '1 reporte programado mensual', 'Exportación a CSV', 'Alertas por correo electrónico', 'Soporte por WhatsApp'], cta: 'Elegir Básico' },
+    { name: 'Pro', precio: 'Q599', color: 'navy', desc: 'Para empresas en crecimiento', popular: true, features: ['50 palabras clave activas', '30 eventos en pipeline', '5 reportes programados', 'WhatsApp + Correo en tiempo real', 'Export XLSX profesional', 'Hasta 3 usuarios colaborando', 'Estadísticas avanzadas'], cta: 'Elegir Pro' },
+    { name: 'Enterprise', precio: 'Q999', color: 'violet', desc: 'Inteligencia de mercado', features: ['Palabras clave ilimitadas', 'Pipeline sin límites', 'Reportes ilimitados', 'WhatsApp prioritario 24/7', 'Acceso a API completa', 'Hasta 10 usuarios', 'Soporte dedicado personalizado', 'Onboarding guiado para tu equipo'], cta: 'Elegir Enterprise' },
   ]
 
   const colorMap: Record<string, string> = {
@@ -218,9 +218,12 @@ export default function Login() {
       {/* HERO */}
       <div className="bg-gradient-to-br from-[#0d2137] via-[#112a47] to-[#1a3a5c] text-white">
         <header className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-lg font-extrabold tracking-wider">
+          <div className="flex items-center gap-3">
+            <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="h-8 w-8 rounded-lg object-cover" />
+            <div className="flex items-center gap-2 text-lg font-extrabold tracking-wider">
             <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             LiciTrack<span className="text-cyan-400">GT</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setView('login')} className="text-sm text-white/60 hover:text-white transition">Iniciar sesión</button>
@@ -364,9 +367,14 @@ export default function Login() {
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 text-lg font-extrabold mb-3">
-                <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                LiciTrack<span className="text-cyan-400">GT</span>
+              <div className="flex items-center gap-3 mb-3">
+                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="h-8 w-8 rounded-lg object-cover" />
+                <div>
+                  <div className="flex items-center gap-2 text-lg font-extrabold">
+                    <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    LiciTrack<span className="text-cyan-400">GT</span>
+                  </div>
+                </div>
               </div>
               <p className="text-sm text-white/50 leading-relaxed max-w-xs">Monitoreo inteligente de Guatecompras. Alertas en tiempo real, pipeline de seguimiento y reportes profesionales para tu empresa.</p>
             </div>
@@ -375,26 +383,23 @@ export default function Login() {
               <ul className="space-y-2 text-sm text-white/50">
                 <li><button onClick={() => navigateToLegal('terminos')} className="hover:text-white transition text-left">Términos y Condiciones</button></li>
                 <li><button onClick={() => navigateToLegal('privacidad')} className="hover:text-white transition text-left">Política de Privacidad</button></li>
-                <li><a href="https://wa.me/50258309505" target="_blank" rel="noopener" className="hover:text-white transition">Soporte WhatsApp</a></li>
+                <li><a href="https://wa.me/50258303182" target="_blank" rel="noopener" className="hover:text-white transition">Soporte WhatsApp</a></li>
                 <li><a href="mailto:soporte@totalappgt.online" className="hover:text-white transition">soporte@totalappgt.online</a></li>
               </ul>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-cyan-400 rounded-lg flex items-center justify-center text-black font-extrabold text-xs">TA</div>
+                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-8 h-8 rounded-lg object-cover" />
                 <span className="font-semibold text-sm">TotalApp<span className="text-cyan-400">GT</span></span>
               </div>
               <p className="text-sm text-white/50 leading-relaxed">
-                LiciTrackGT es una marca de <strong className="text-white/70">TotalAppGT</strong>, propiedad de <strong className="text-white/70">Daniel Martinez</strong>.
-              </p>
-              <p className="text-xs text-white/30 mt-2">
-                Soluciones tecnológicas inteligentes para empresas guatemaltecas.
+                LiciTrackGT es una marca de <strong className="text-white/70">TotalAppGT</strong>. Soluciones tecnologicas inteligentes para empresas guatemaltecas.
               </p>
             </div>
           </div>
           <hr className="border-white/10 mb-6" />
           <p className="text-center text-xs text-white/30">
-            &copy; {new Date().getFullYear()} TotalAppGT — Daniel Martinez. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} TotalAppGT. Todos los derechos reservados.
           </p>
         </div>
       </footer>
