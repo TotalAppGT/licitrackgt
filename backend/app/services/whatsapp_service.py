@@ -23,24 +23,26 @@ def _limpiar(texto: str) -> str:
 
 
 def texto_alerta_prueba() -> str:
-    return (SISTEMA_NOMBRE + ": PRUEBA - Tu numero de WhatsApp quedo vinculado correctamente. "
-            "Recibiras alertas cuando haya nuevos eventos que coincidan con tus keywords.")
+    return (f"{SISTEMA_NOMBRE}: Tu numero de WhatsApp fue vinculado exitosamente. "
+            "A partir de ahora recibiras tus alertas, reportes y recordatorios directamente en esta conversacion.")
 
 
 def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
-    cabecera = f"{SISTEMA_NOMBRE}: {n} evento(s) nuevo(s){hora_str}"
+    cabecera = f"{SISTEMA_NOMBRE}: ALERTA - {n} nuevo(s) evento(s) detectado(s){hora_str} con tus keywords activas."
     partes = [f"{m['keyword']}: {m['titulo'][:50]} - Q{float(m['monto'] or 0):,.0f}" for m in matches[:6]]
     return cabecera + "  |  " + "  |  ".join(partes)
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
-    return (f"{SISTEMA_NOMBRE}: REPORTE - {total} eventos para '{keyword_text[:35]}'. "
-            "Archivo XLSX enviado a tu correo.")
+    return (f"{SISTEMA_NOMBRE}: REPORTE PROGRAMADO - {total} eventos exportados para "
+            f"'{keyword_text[:35]}'. El archivo XLSX completo fue enviado a tu correo electronico.")
 
 
 def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
-    s = f"{SISTEMA_NOMBRE}: VENCE {label.upper()} - {titulo[:55]} | NOG: {nog} | Entidad: {entidad or 'N/A'}"
+    prefijo = "HOY" if label.upper() == "HOY" else f"en {label}"
+    s = (f"{SISTEMA_NOMBRE}: RECORDATORIO - Vence {prefijo}: {titulo[:55]}. "
+         f"| NOG: {nog} | Entidad: {entidad or 'N/A'}")
     if monto:
         s += f" | Monto: Q{float(monto):,.0f}"
     return s
