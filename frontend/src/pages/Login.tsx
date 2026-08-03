@@ -388,12 +388,15 @@ export default function Login() {
               </ul>
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-8 h-8 rounded-lg object-cover" />
-                <span className="font-semibold text-sm">TotalApp<span className="text-cyan-400">GT</span></span>
+              <div className="flex items-center gap-3 mb-3">
+                <img src="/totalapp-logo.jpg" alt="TotalAppGT" className="w-12 h-12 rounded-xl object-cover shadow-lg" />
+                <div>
+                  <div className="font-bold text-base text-white">TotalApp<span className="text-cyan-400">GT</span></div>
+                  <div className="text-xs text-white/40">Soluciones inteligentes</div>
+                </div>
               </div>
               <p className="text-sm text-white/50 leading-relaxed">
-                LiciTrackGT es una marca de <strong className="text-white/70">TotalAppGT</strong>. Soluciones tecnologicas inteligentes para empresas guatemaltecas.
+                LiciTrackGT es una marca de <strong className="text-white/70">TotalAppGT</strong>. Tecnologia guatemalteca para empresas que quieren estar un paso adelante.
               </p>
             </div>
           </div>
