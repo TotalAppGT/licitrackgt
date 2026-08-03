@@ -1,8 +1,12 @@
 import re
 import httpx
+import asyncio
 from app.config import settings
 
 WHATSAPP_API = "https://graph.facebook.com/v22.0"
+PROXY_URL = "https://webhook-meta-production-bb93.up.railway.app"
+PROXY_API_KEY = "proxy_master_2026_secret"
+LICITRACK_SYSTEM_ID = "b24abb0a"
 
 WHATSAPP_TEMPLATE = "alerta_totalappgt"
 WHATSAPP_TEMPLATE_LANG = "es_MX"
@@ -84,3 +88,22 @@ def verificar_webhook(mode: str, token: str, challenge: str) -> str | None:
     if mode == "subscribe" and token == settings.WHATSAPP_VERIFY_TOKEN:
         return challenge
     return None
+
+
+def registrar_telefono_proxy(phone: str, user_id: int) -> bool:
+    try:
+        with httpx.Client(timeout=10) as cl:
+            resp = cl.post(
+                f"{PROXY_URL}/api/systems/register-phone",
+                json={
+                    "system_id": LICITRACK_SYSTEM_ID,
+                    "phone": phone,
+                    "internal_user_id": str(user_id),
+                },
+                headers={"X-API-Key": PROXY_API_KEY}
+            )
+        print(f"Proxy registro tel {phone} usuario {user_id}: {resp.status_code} {resp.text[:150]}")
+        return resp.status_code < 400
+    except Exception as e:
+        print(f"Proxy register-phone error: {e}")
+        return False

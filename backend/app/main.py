@@ -91,6 +91,9 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if req.whatsapp_phone:
         user.whatsapp_phone = req.whatsapp_phone.strip()
     db.add(user); await db.commit(); await db.refresh(user)
+    if user.whatsapp_phone:
+        from app.services.whatsapp_service import registrar_telefono_proxy
+        registrar_telefono_proxy(user.whatsapp_phone, user.id)
     token = create_token({"sub": user.email})
     return TokenResponse(access_token=token, user={
         "id": user.id, "email": user.email, "name": user.name, "plan": "free"
@@ -154,7 +157,12 @@ class UpdateProfileRequest(BaseModel):
 @app.put("/api/auth/profile")
 async def update_profile(req: UpdateProfileRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     if req.name is not None: user.name = req.name
-    if req.whatsapp_phone is not None: user.whatsapp_phone = req.whatsapp_phone.strip() or None
+    if req.whatsapp_phone is not None:
+        phone = req.whatsapp_phone.strip() or None
+        user.whatsapp_phone = phone
+        if phone:
+            from app.services.whatsapp_service import registrar_telefono_proxy
+            registrar_telefono_proxy(phone, user.id)
     if req.new_password:
         if not req.current_password or not verify_password(req.current_password, user.password_hash):
             raise HTTPException(status_code=400, detail="ContraseÃ±a actual incorrecta")
