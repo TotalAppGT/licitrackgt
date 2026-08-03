@@ -48,7 +48,7 @@ def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) 
     return s
 
 
-async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "\u00a0") -> bool:
+async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "\U0001f44b") -> bool:
     if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
         return False
     nombre = _limpiar(nombre_usuario or "Usuario")
