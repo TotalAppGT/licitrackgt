@@ -8,7 +8,7 @@ PROXY_URL = "https://webhook-meta-production-bb93.up.railway.app"
 PROXY_API_KEY = "proxy_master_2026_secret"
 LICITRACK_SYSTEM_ID = "b24abb0a"
 
-WHATSAPP_TEMPLATE = "notificacion_sistema_ia"
+WHATSAPP_TEMPLATE = "totalappgt_aviso"
 WHATSAPP_TEMPLATE_LANG = "es_MX"
 
 SISTEMA_NOMBRE = "LiciTrackGT"
@@ -24,22 +24,19 @@ def _limpiar(texto: str) -> str:
 
 def texto_alerta_prueba() -> str:
     return ("Vinculacion exitosa. "
-            "Recibiras tus alertas de eventos, reportes programados y recordatorios de vencimientos en esta conversacion. "
-            "Ingresa al sistema para configurar tus keywords y alertas: licitrackgt.totalappgt.online "
-            "\u2014 LiciTrackGT")
+            "Recibiras tus alertas de eventos, reportes programados y recordatorios de vencimientos en esta conversacion.")
 
 
 def texto_alerta_matches(matches: list, hora_str: str = "") -> str:
     n = len(matches)
     cab = f"ALERTA  |  {n} eventos nuevos{hora_str}"
     partes = [f"{m['keyword']}: {m['titulo'][:45]} \u2014 Q{float(m['monto'] or 0):,.0f}" for m in matches[:6]]
-    return cab + "  |  " + "  |  ".join(partes) + "  |  licitrackgt.totalappgt.online  \u2014 LiciTrackGT"
+    return cab + "  |  " + "  |  ".join(partes)
 
 
 def texto_reporte_programado(total: int, keyword_text: str) -> str:
     return (f"REPORTE  |  {total:,} eventos exportados para '{keyword_text[:35]}'  |  "
-            "Archivo XLSX enviado a tu correo  |  "
-            "Revisa el detalle en: licitrackgt.totalappgt.online  \u2014 LiciTrackGT")
+            "Archivo XLSX enviado a tu correo.")
 
 
 def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) -> str:
@@ -48,13 +45,12 @@ def texto_deadline(label: str, titulo: str, nog: str, entidad: str, monto=None) 
          f"NOG: {nog}  |  Entidad: {entidad or 'N/A'}")
     if monto:
         s += f"  |  Monto: Q{float(monto):,.0f}"
-    return s + "  |  licitrackgt.totalappgt.online  \u2014 LiciTrackGT"
+    return s
 
 
-async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "\U0001f44b") -> bool:
+async def enviar_whatsapp(telefono: str, mensaje: str) -> bool:
     if not settings.WHATSAPP_TOKEN or not settings.WHATSAPP_PHONE_ID:
         return False
-    nombre = _limpiar(nombre_usuario or "Usuario")
     texto = _limpiar(mensaje)
     try:
         async with httpx.AsyncClient(timeout=20) as cl:
@@ -73,8 +69,8 @@ async def enviar_whatsapp(telefono: str, mensaje: str, nombre_usuario: str = "\U
                         "components": [
                             {"type": "body",
                              "parameters": [
-                                 {"type": "text", "text": nombre},
-                                 {"type": "text", "text": texto},
+                                 {"type": "text", "parameter_name": "sistema", "text": SISTEMA_NOMBRE},
+                                 {"type": "text", "parameter_name": "mensaje", "text": texto},
                              ]}
                         ],
                     },
