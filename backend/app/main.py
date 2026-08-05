@@ -1013,12 +1013,13 @@ async def admin_update_user(user_id: int, req: AdminUpdateUserRequest, user: Use
     target = await db.get(User, user_id)
     if not target:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    target.subscription_plan = req.plan or target.subscription_plan
-    target.keywords_limit = req.keywords_limit or target.keywords_limit
-    if req.name is not None: target.name = req.name
-    if req.is_admin is not None: target.is_admin = req.is_admin
-    if req.main_user_id is not None: target.main_user_id = req.main_user_id
-    if req.password: target.password_hash = hash_password(req.password)
+    fields = req.model_dump(exclude_unset=True)
+    if "plan" in fields and fields["plan"]: target.subscription_plan = fields["plan"]
+    if "keywords_limit" in fields and fields["keywords_limit"] is not None: target.keywords_limit = fields["keywords_limit"]
+    if "name" in fields: target.name = fields["name"]
+    if "is_admin" in fields: target.is_admin = fields["is_admin"]
+    if "main_user_id" in fields: target.main_user_id = fields["main_user_id"]
+    if "password" in fields and fields["password"]: target.password_hash = hash_password(fields["password"])
     await db.commit()
     return {"ok": True, "id": target.id, "plan": target.subscription_plan, "keywords_limit": target.keywords_limit, "is_admin": target.is_admin, "name": target.name, "main_user_id": target.main_user_id}
 
