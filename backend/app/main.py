@@ -79,7 +79,8 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(access_token=token, user={
         "id": user.id, "email": user.email, "name": user.name,
         "is_admin": user.is_admin, "plan": user.subscription_plan,
-        "is_team_member": user.main_user_id is not None
+        "is_team_member": user.main_user_id is not None,
+        "whatsapp_phone": user.whatsapp_phone or ""
     })
 
 @app.post("/api/auth/register")
@@ -142,7 +143,8 @@ async def firebase_auth(req: FirebaseAuthRequest, db: AsyncSession = Depends(get
     return TokenResponse(access_token=token, user={
         "id": user.id, "email": user.email, "name": user.name,
         "is_admin": user.is_admin, "plan": user.subscription_plan,
-        "is_team_member": user.main_user_id is not None
+        "is_team_member": user.main_user_id is not None,
+        "whatsapp_phone": user.whatsapp_phone or ""
     })
 
 @app.get("/api/auth/me")
