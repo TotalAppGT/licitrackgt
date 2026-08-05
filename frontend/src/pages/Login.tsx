@@ -99,6 +99,7 @@ export default function Login() {
         })
         const data = await res.json()
         localStorage.setItem('token', data.access_token)
+        localStorage.setItem('user', JSON.stringify(data.user))
         window.location.reload()
       } else { await login(email, password) }
     } catch (err: any) { setError(err.message?.replace('Firebase: ', '') || 'Error al ingresar') }
@@ -114,7 +115,9 @@ export default function Login() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firebase_token: fbToken }),
       })
-      localStorage.setItem('token', (await res.json()).access_token)
+      const fbData = await res.json()
+      localStorage.setItem('token', fbData.access_token)
+      localStorage.setItem('user', JSON.stringify(fbData.user))
       window.location.reload()
     } catch (err: any) { setError('Error con Google') }
     finally { setLoading(false) }
