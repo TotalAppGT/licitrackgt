@@ -959,8 +959,12 @@ async def enviar_resultados(f: FiltrosQuery, user: User = Depends(get_current_us
 # ADMIN
 # ============================================================
 class AdminUpdateUserRequest(BaseModel):
-    plan: str
-    keywords_limit: int
+    plan: Optional[str] = None
+    keywords_limit: Optional[int] = None
+    name: Optional[str] = None
+    is_admin: Optional[bool] = None
+    main_user_id: Optional[int] = None
+    password: Optional[str] = None
 
 @app.get("/api/admin/usuarios")
 async def admin_list_users(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -1009,10 +1013,14 @@ async def admin_update_user(user_id: int, req: AdminUpdateUserRequest, user: Use
     target = await db.get(User, user_id)
     if not target:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    target.subscription_plan = req.plan
-    target.keywords_limit = req.keywords_limit
+    target.subscription_plan = req.plan or target.subscription_plan
+    target.keywords_limit = req.keywords_limit or target.keywords_limit
+    if req.name is not None: target.name = req.name
+    if req.is_admin is not None: target.is_admin = req.is_admin
+    if req.main_user_id is not None: target.main_user_id = req.main_user_id
+    if req.password: target.password_hash = hash_password(req.password)
     await db.commit()
-    return {"ok": True, "id": target.id, "plan": target.subscription_plan, "keywords_limit": target.keywords_limit}
+    return {"ok": True, "id": target.id, "plan": target.subscription_plan, "keywords_limit": target.keywords_limit, "is_admin": target.is_admin, "name": target.name, "main_user_id": target.main_user_id}
 
 # ============================================================
 # STARTUP
