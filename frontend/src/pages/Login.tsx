@@ -98,6 +98,9 @@ export default function Login() {
           body: JSON.stringify({ firebase_token: fbToken, name }),
         })
         const data = await res.json()
+        if (!res.ok || !data.access_token) {
+          throw new Error(data.detail || 'Error de autenticacion')
+        }
         localStorage.setItem('token', data.access_token)
         localStorage.setItem('user', JSON.stringify(data.user))
         window.location.reload()
@@ -116,6 +119,9 @@ export default function Login() {
         body: JSON.stringify({ firebase_token: fbToken }),
       })
       const fbData = await res.json()
+      if (!res.ok || !fbData.access_token) {
+        throw new Error(fbData.detail || 'Error de autenticacion')
+      }
       localStorage.setItem('token', fbData.access_token)
       localStorage.setItem('user', JSON.stringify(fbData.user))
       window.location.reload()

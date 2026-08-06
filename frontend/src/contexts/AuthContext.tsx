@@ -26,11 +26,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const restoreUser = () => {
     try {
       const u = localStorage.getItem('user')
-      if (u) { setUser(JSON.parse(u)); setLoading(false); return }
+      if (u && u !== 'undefined') { setUser(JSON.parse(u)); setLoading(false); return }
     } catch {}
     const token = localStorage.getItem('token')
-    if (!token) { setLoading(false); return }
-    api.me().then(setUser).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false))
+    if (!token || token === 'undefined') { setLoading(false); return }
+    api.me().then(setUser).catch(() => { localStorage.removeItem('token'); localStorage.removeItem('user') }).finally(() => setLoading(false))
   }
 
   useEffect(() => {
