@@ -88,23 +88,21 @@ export default function Login() {
   const handleAuth = async (register: boolean) => {
     setError(''); setLoading(true)
     try {
-      let fbUser
-      if (register) fbUser = await registerWithEmail(email, password)
-      else { try { fbUser = await loginWithEmail(email, password) } catch {} }
-      if (fbUser) {
+      if (register) {
+        const fbUser = await registerWithEmail(email, password)
         const fbToken = await fbUser.user.getIdToken()
         const res = await fetch('/api/auth/firebase', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ firebase_token: fbToken, name }),
         })
         const data = await res.json()
-        if (!res.ok || !data.access_token) {
-          throw new Error(data.detail || 'Error de autenticacion')
-        }
+        if (!res.ok || !data.access_token) throw new Error(data.detail || 'Error al registrar')
         localStorage.setItem('token', data.access_token)
         localStorage.setItem('user', JSON.stringify(data.user))
         window.location.reload()
-      } else { await login(email, password) }
+      } else {
+        await login(email, password)
+      }
     } catch (err: any) { setError(err.message?.replace('Firebase: ', '') || 'Error al ingresar') }
     finally { setLoading(false) }
   }
