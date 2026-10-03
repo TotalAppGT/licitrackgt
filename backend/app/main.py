@@ -104,6 +104,32 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         "id": user.id, "email": user.email, "name": user.name, "plan": "free"
     })
 
+@app.post("/api/provision")
+async def provision(request: Request, db: AsyncSession = Depends(get_db)):
+    import os
+    if request.headers.get("x-provision-secret") != os.getenv("PROVISION_SECRET", "__none__"):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    body = await request.json()
+    nombre = body.get("nombre")
+    email = (body.get("admin_email") or "").strip().lower()
+    password = body.get("admin_password")
+    if not nombre or not email or not password:
+        raise HTTPException(status_code=400, detail="faltan datos")
+    plan = (body.get("plan") or "basico").lower()
+    sp_map = {"basico": ("basico", 10), "pro": ("pro", 50), "enterprise": ("enterprise", 100000)}
+    sp, kw = sp_map.get(plan, ("basico", 10))
+    existing = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    if existing:
+        return {"ok": True, "user_id": existing.id, "nota": "usuario ya existia"}
+    user = User(email=email, password_hash=hash_password(password), name=nombre,
+                subscription_plan=sp, subscription_status="active", keywords_limit=kw)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    print(f"[PROVISION] LiciTrack usuario creado: {email} plan={sp}")
+    return {"ok": True, "user_id": user.id}
+
+
 class FirebaseAuthRequest(BaseModel):
     firebase_token: str
     name: str = ""
